@@ -13,3 +13,9 @@ build/
 DerivedData/
 *.ipa
 *.app
+
+# Draft pipeline artifacts (regenerable: `swift tools/card-draft/montage.swift drafts`)
+drafts/_contact-sheet*.png
+
+# Local review workspace (per-suit / per-major sheet scratch dirs)
+.scratch/

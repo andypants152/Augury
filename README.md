@@ -5,7 +5,8 @@ line-art cards** with a **holographic foil finish that shifts as you tilt the de
 
 **One price ($9.99), yours forever. No subscription. No account. No internet.**
 
-> **Status: M1** — the 78-card `Arcana` content model. The plan lives in [`roadmap.md`](roadmap.md).
+> **Status: M2** — the 78-card `Arcana` content model, plus the draft generator and the
+> 78 first-pass **celestial line-art SVGs** in `drafts/`. The plan lives in [`roadmap.md`](roadmap.md).
 
 The promise (short form): the deck is **made once, done** — 78 cards authored once and
 committed as static SVGs, never changing. Canonical tarot meaning (upright + inverted).
@@ -38,6 +39,8 @@ Swift 5 language mode).
   - `Models/ArcanaCatalog.swift` — the 78 cards (names, keywords, upright + inverted meanings)
   - `AuguryApp.swift` / `ContentView.swift` — the app shell (grown in later milestones)
 - `AuguryTests/` — unit tests
+- `drafts/` — the 78 first-pass line-art SVGs (M2) + deck order; refined in M3, then committed to the bundle
+- `tools/card-draft/` — the design-time pipeline (never shipped): `generate.py` (specs → SVGs) and `montage.swift` (contact-sheet previews at 3 sizes)
 - `project.yml` — XcodeGen source of truth (the `.xcodeproj` is generated, not committed)
 - `roadmap.md` — the plan (milestones, sharp edges, metrics)
 

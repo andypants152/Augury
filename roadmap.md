@@ -84,10 +84,15 @@ the 22 majors are a real, standalone deck.
 
 ## Where we are
 
-**M1 complete — building.** The 78-card `Arcana` model + `ArcanaCatalog` are in, and the
-content tests are green on the simulator (78/78 cards, 156 meanings, 22 majors / 56 minors,
-14 per suit, no duplicate keywords). Next: **M2** — the draft generator that turns per-arcana
-celestial specs into first-pass line-art SVGs.
+**M1 + M2 complete — starting M3.** The 78-card `Arcana` model + `ArcanaCatalog` are in, and
+the content tests are green on the simulator (78/78 cards, 156 meanings, 22 majors / 56 minors,
+14 per suit, no duplicate keywords). The draft pipeline is in: `tools/card-draft/generate.py`
+turns per-arcana celestial specs into **78 first-pass line-art SVGs** in `drafts/` — deterministic
+(same seed → byte-identical), one consistent style (indigo starfield, starlight lines, gold frame),
+each suit with a distinct celestial vocabulary (Wands = fire bursts, Cups = crescents, Swords = stars,
+Pentacles = ringed planets). `montage.swift` rasterizes the deck into contact sheets at **3 sizes**
+(overview / reading / review) for the eyeball pass. Next: **M3** — refine the 78 (staged: 22
+majors first, then 56 minors), then commit the finals to the bundle.
 
 ---
 
