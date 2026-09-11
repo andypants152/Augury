@@ -137,8 +137,8 @@
 <circle cx="434.0" cy="259.1" r="1.2" fill="#dfe7ff" stroke="none" fill-opacity="0.17"/>
 <circle cx="146.0" cy="685.3" r="2.4" fill="#dfe7ff" stroke="none" fill-opacity="0.26"/>
 <circle cx="245.3" cy="610.4" r="1.7" fill="#dfe7ff" stroke="none" fill-opacity="0.17"/>
-<path d="M 214.8 273.7 A 150.0 150.0 0 1 1 214.8 552.7 L 139.8 552.7 A 150.0 150.0 0 1 0 139.8 273.7 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 298.7 475.7 A 78.0 78.0 0 1 1 298.7 330.7 L 259.7 330.7 A 78.0 78.0 0 1 0 259.7 475.7 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 409.5 358.0 A 150.0 150.0 0 1 1 130.5 358.0 L 55.5 358.0 A 150.0 150.0 0 1 0 334.5 358.0 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 342.5 374.5 A 78.0 78.0 0 1 1 197.5 374.5 L 154.6 374.5 A 78.0 78.0 0 1 0 299.6 374.5 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="270.0" y1="283.2" x2="288.0" y2="283.2" w="1.5" color="#dfe7ff" op="0.9"/>
 <line x1="270.0" y1="283.2" x2="270.0" y2="301.2" w="1.5" color="#dfe7ff" op="0.9"/>
 <line x1="270.0" y1="283.2" x2="252.0" y2="283.2" w="1.5" color="#dfe7ff" op="0.9"/>

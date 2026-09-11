@@ -125,7 +125,7 @@
 <line x1="413.7" y1="251.0" x2="413.7" y2="246.6" w="1.2" color="#dfe7ff" op="0.35596361974718194"/>
 <circle cx="395.0" cy="30.1" r="1.9" fill="#dfe7ff" stroke="none" fill-opacity="0.16"/>
 <circle cx="53.2" cy="482.5" r="1.2" fill="#dfe7ff" stroke="none" fill-opacity="0.37"/>
-<path d="M 214.8 273.7 A 150.0 150.0 0 1 1 214.8 552.7 L 139.8 552.7 A 150.0 150.0 0 1 0 139.8 273.7 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 409.5 358.0 A 150.0 150.0 0 1 1 130.5 358.0 L 55.5 358.0 A 150.0 150.0 0 1 0 334.5 358.0 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 270.0 325.2 L 289.3 383.9 L 348.0 403.2 L 289.3 422.5 L 270.0 481.2 L 250.7 422.5 L 192.0 403.2 L 250.7 383.9 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="270.0" y1="283.2" x2="288.0" y2="283.2" w="1.5" color="#dfe7ff" op="0.9"/>
 <line x1="270.0" y1="283.2" x2="270.0" y2="301.2" w="1.5" color="#dfe7ff" op="0.9"/>

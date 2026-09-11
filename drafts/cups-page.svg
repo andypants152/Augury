@@ -131,7 +131,7 @@
 <line x1="71.9" y1="181.9" x2="71.9" y2="186.1" w="1.2" color="#dfe7ff" op="0.2754167121082177"/>
 <line x1="71.9" y1="181.9" x2="67.6" y2="181.9" w="1.2" color="#dfe7ff" op="0.2754167121082177"/>
 <line x1="71.9" y1="181.9" x2="71.9" y2="177.7" w="1.2" color="#dfe7ff" op="0.2754167121082177"/>
-<path d="M 303.1 516.9 A 90.0 90.0 0 1 1 303.1 349.5 L 258.1 349.5 A 90.0 90.0 0 1 0 258.1 516.9 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 353.7 400.1 A 90.0 90.0 0 1 1 186.3 400.1 L 136.8 400.1 A 90.0 90.0 0 1 0 304.2 400.1 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 365.0 296.0 C 392.2 325.9 384.0 350.4 365.0 350.4 C 346.0 350.4 337.8 325.9 365.0 296.0 Z" fill="none" stroke="#dfe7ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 180.0 608.2 L 222.9 581.8 L 247.8 528.3 L 298.2 509.0 L 377.9 471.3" fill="none" stroke="#dfe7ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.70"/>
 <line x1="170.0" y1="313.2" x2="186.0" y2="313.2" w="1.5" color="#dfe7ff" op="0.8"/>

@@ -218,6 +218,15 @@ def bolt(cx, cy, r, w=MOTIF_W, color=LINE, op=1.0):
     return [path("M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in pts) + " Z", **S(w, color, op))]
 
 
+def tower(cx, cy, r, w=MOTIF_W, color=LINE, op=1.0):
+    """A tall keep with a pointed roof — the Tower needs its own silhouette,
+    distinct from the Emperor's square."""
+    hw = r * 0.55
+    pts = [(cx - hw, cy + r), (cx - hw, cy - r * 0.35), (cx, cy - r),
+           (cx + hw, cy - r * 0.35), (cx + hw, cy + r), (cx - hw, cy + r)]
+    return [path("M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in pts) + " Z", **S(w, color, op))]
+
+
 def scale(cx, cy, r, w=MOTIF_W, color=LINE, op=1.0):
     out = [line(cx, cy - r, cx, cy + r * 0.8, w=MOTIF_W, color=color, op=op)]
     out.append(line(cx - r * 0.8, cy - r * 0.5, cx + r * 0.8, cy - r * 0.5, w=MOTIF_W, color=color, op=op))
@@ -365,7 +374,7 @@ def layout(n, cx, cy, rx, ry):
 SUIT_MOTIFS = {
     "wands":     {"prim": lambda x, y, r: burst(x, y, r * 1.15),
                   "accent": lambda x, y, r: comet(x, y, r, angle=math.pi * 0.8, tail=2.4)},
-    "cups":      {"prim": lambda x, y, r: crescent(x, y, r, open=0.5),
+    "cups":      {"prim": lambda x, y, r: crescent(x, y, r, open=0.55, angle=math.pi / 2),
                   "accent": lambda x, y, r: droplet(x, y, r * 0.8)},
     "swords":    {"prim": lambda x, y, r: star(x, y, r, points=4, inner=0.35),
                   "accent": lambda x, y, r: spiral(x, y, r * 0.8, turns=2.0)},
@@ -391,7 +400,7 @@ def figure_for_minor(suit, rank, seed):
         return m["prim"](cx - 20, cy + 10, 95) + m["accent"](cx + 70, cy - 60, 40) \
             + pathline(cx + 30, cy + 120, 240, 180, seed, op=0.7)
     if rank == "Queen":
-        return crescent(cx, cy + 10, 150, open=0.5, angle=0) + m["prim"](cx, cy, 78) \
+        return crescent(cx, cy + 10, 150, open=0.5, angle=math.pi / 2) + m["prim"](cx, cy, 78) \
             + spark(cx, cy - 120, 18, op=0.9) + spark(cx - 95, cy + 70, 14, op=0.7) \
             + spark(cx + 95, cy + 70, 14, op=0.7)
     if rank == "King":
@@ -404,7 +413,7 @@ def figure_for_major(name, seed):
     cx, cy = FX, FY
     if name == "The Fool":
         return littleFigure(cx - 55, cy + 55, 70) + pathline(cx + 10, cy - 30, 240, 250, seed, op=0.8) \
-            + spark(cx + 110, cy - 130, 24, op=0.9)
+            + spark(cx + 110, cy - 130, 15, op=0.85)
     if name == "The Magician":
         return lemniscate(cx, cy + 20, 120) + [dot(cx, cy + 20, 5)] \
             + [spark(cx, cy - 120, 20, op=0.9), spark(cx, cy + 160, 20, op=0.9),
@@ -415,7 +424,8 @@ def figure_for_major(name, seed):
     if name == "The Empress":
         return sun(cx, cy - 30, 60, rays=10) + rosette(cx, cy + 90, 110, petals=8, op=0.85)
     if name == "The Emperor":
-        return crystal(cx, cy, 165, sides=4, rot=0) + star(cx, cy, 60, points=4, inner=0.4, op=0.95)
+        return crystal(cx, cy, 165, sides=4, rot=math.pi / 4) + star(cx, cy, 60, points=4, inner=0.4, op=0.95) \
+            + spark(cx, cy - 215, 18, op=0.8) + spark(cx, cy + 215, 13, op=0.6)
     if name == "The Hierophant":
         xs = [(cx, cy - 130), (cx - 120, cy), (cx + 120, cy), (cx - 75, cy + 130), (cx + 75, cy + 130)]
         return [star(x, y, 24, points=4, inner=0.4, op=0.95) for (x, y) in xs] + lemniscate(cx, cy, 60, op=0.8)
@@ -457,7 +467,7 @@ def figure_for_major(name, seed):
             + [path(f"M {cx - 80:.0f} {cy + 50:.0f} A 90 90 0 0 1 {cx + 80:.0f} {cy + 50:.0f}",
                     **S(MID_W, LINE, 0.8))] + crescent(cx, cy - 120, 70, open=0.7, angle=math.pi)
     if name == "The Tower":
-        return crystal(cx, cy + 30, 120, sides=4, rot=0) + bolt(cx, cy - 90, 90) \
+        return tower(cx, cy + 30, 120) + bolt(cx, cy - 95, 90) \
             + star(cx + 110, cy + 130, 30, points=5, inner=0.45, rot=math.pi * 0.3, op=0.9)
     if name == "The Star":
         return star(cx, cy - 40, 120, points=8, inner=0.42) + tide(cx, cy + 150, 150, 16, waves=3, op=0.8) \

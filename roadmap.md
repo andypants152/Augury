@@ -84,15 +84,24 @@ the 22 majors are a real, standalone deck.
 
 ## Where we are
 
-**M1 + M2 complete — starting M3.** The 78-card `Arcana` model + `ArcanaCatalog` are in, and
-the content tests are green on the simulator (78/78 cards, 156 meanings, 22 majors / 56 minors,
-14 per suit, no duplicate keywords). The draft pipeline is in: `tools/card-draft/generate.py`
-turns per-arcana celestial specs into **78 first-pass line-art SVGs** in `drafts/` — deterministic
-(same seed → byte-identical), one consistent style (indigo starfield, starlight lines, gold frame),
-each suit with a distinct celestial vocabulary (Wands = fire bursts, Cups = crescents, Swords = stars,
-Pentacles = ringed planets). `montage.swift` rasterizes the deck into contact sheets at **3 sizes**
-(overview / reading / review) for the eyeball pass. Next: **M3** — refine the 78 (staged: 22
-majors first, then 56 minors), then commit the finals to the bundle.
+**M1 + M2 complete. M3 in progress — first review pass over all 78 done.** The 78-card
+`Arcana` model + `ArcanaCatalog` are in (tests green: 78/78 cards, 156 meanings, 22/56 split,
+14 per suit, no duplicate keywords). The draft pipeline (`tools/card-draft`) is in: deterministic
+specs → 78 line-art SVGs in `drafts/`, one consistent style (indigo starfield, starlight lines,
+gold frame), each suit with a distinct celestial vocabulary, contact sheets at 3 sizes via
+`montage.swift`.
+
+The first review pass (all 78, in deck order, on the contact sheets): the deck reads as *one*
+deck, and each card reads as its arcana. Pass-1 fixes landed:
+
+- **Cups** crescents now open **up** — the suit literally reads as cups (14 cards).
+- **Queens** (all 4 suits): the big crescent became a bowl that cradles the suit motif.
+- **The Tower**: its own pointed-roof keep silhouette (was sharing the Emperor's diamond).
+- **The Emperor**: axis-aligned square + glints to fill the frame.
+- **The Fool**: spark de-emphasized so the figure leads.
+
+Next: final human approval of the 78 (the M3 sharp edge — eyeball `swift tools/card-draft/montage.swift drafts`),
+then commit the approved SVGs to the bundle, staged **22 majors → 56 minors**.
 
 ---
 

@@ -135,7 +135,7 @@
 <circle cx="249.5" cy="553.0" r="1.5" fill="#dfe7ff" stroke="none" fill-opacity="0.26"/>
 <circle cx="168.1" cy="751.1" r="1.4" fill="#dfe7ff" stroke="none" fill-opacity="0.30"/>
 <ellipse cx="270.0" cy="403.2" rx="150.0" ry="150.0" transform="rotate(0 270.0 403.2)" fill="none" stroke="#dfe7ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 302.4 485.0 A 88.0 88.0 0 1 1 302.4 321.4 L 258.4 321.4 A 88.0 88.0 0 1 0 258.4 485.0 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 351.8 370.8 A 88.0 88.0 0 1 1 188.2 370.8 L 139.8 370.8 A 88.0 88.0 0 1 0 303.4 370.8 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 244.0 266.2 L 244.0 245.4 L 259.6 255.8 L 270.0 237.6 L 280.4 255.8 L 296.0 245.4 L 296.0 266.2 Z" fill="none" stroke="#dfe7ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <line x1="270.0" y1="225.2" x2="286.0" y2="225.2" w="1.5" color="#dfe7ff" op="0.9"/>
 <line x1="270.0" y1="225.2" x2="270.0" y2="241.2" w="1.5" color="#dfe7ff" op="0.9"/>

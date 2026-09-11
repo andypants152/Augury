@@ -113,8 +113,8 @@
 <circle cx="237.8" cy="383.2" r="1.6" fill="#dfe7ff" stroke="none" fill-opacity="0.31"/>
 <circle cx="155.7" cy="840.7" r="1.9" fill="#dfe7ff" stroke="none" fill-opacity="0.33"/>
 <circle cx="158.3" cy="566.4" r="1.0" fill="#dfe7ff" stroke="none" fill-opacity="0.34"/>
-<path d="M 390.0 433.2 L 270.0 553.2 L 150.0 433.2 L 270.0 313.2 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 279.0 223.2 L 234.0 322.2 L 274.5 322.2 L 256.5 403.2 L 315.0 299.7 L 271.8 299.7 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 204.0 553.2 L 204.0 391.2 L 270.0 313.2 L 336.0 391.2 L 336.0 553.2 L 204.0 553.2 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 279.0 218.2 L 234.0 317.2 L 274.5 317.2 L 256.5 398.2 L 315.0 294.7 L 271.8 294.7 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 397.6 557.5 L 380.0 546.7 L 362.4 557.5 L 367.2 537.4 L 351.5 523.9 L 372.1 522.3 L 380.0 503.2 L 387.9 522.3 L 408.5 523.9 L 392.8 537.4 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.90"/>
 <rect x="16" y="16" width="508" height="928" rx="26" fill="none" stroke="#e6c79c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.90"/>
 <rect x="30" y="30" width="480" height="900" rx="18" fill="none" stroke="#dfe7ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.26"/>

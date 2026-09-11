@@ -119,10 +119,10 @@
 <line x1="315.8" y1="368.1" x2="315.8" y2="376.0" w="1.2" color="#dfe7ff" op="0.3775032671105214"/>
 <line x1="315.8" y1="368.1" x2="308.0" y2="368.1" w="1.2" color="#dfe7ff" op="0.3775032671105214"/>
 <line x1="315.8" y1="368.1" x2="315.8" y2="360.3" w="1.2" color="#dfe7ff" op="0.3775032671105214"/>
-<path d="M 205.1 367.9 A 75.0 75.0 0 1 1 205.1 228.5 L 167.6 228.5 A 75.0 75.0 0 1 0 167.6 367.9 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 390.1 367.9 A 75.0 75.0 0 1 1 390.1 228.5 L 352.6 228.5 A 75.0 75.0 0 1 0 352.6 367.9 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 205.1 577.9 A 75.0 75.0 0 1 1 205.1 438.5 L 167.6 438.5 A 75.0 75.0 0 1 0 167.6 577.9 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 390.1 577.9 A 75.0 75.0 0 1 1 390.1 438.5 L 352.6 438.5 A 75.0 75.0 0 1 0 352.6 577.9 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 247.2 270.6 A 75.0 75.0 0 1 1 107.8 270.6 L 66.5 270.6 A 75.0 75.0 0 1 0 206.0 270.6 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 432.2 270.6 A 75.0 75.0 0 1 1 292.8 270.6 L 251.5 270.6 A 75.0 75.0 0 1 0 391.0 270.6 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 247.2 480.6 A 75.0 75.0 0 1 1 107.8 480.6 L 66.5 480.6 A 75.0 75.0 0 1 0 206.0 480.6 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 432.2 480.6 A 75.0 75.0 0 1 1 292.8 480.6 L 251.5 480.6 A 75.0 75.0 0 1 0 391.0 480.6 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <rect x="16" y="16" width="508" height="928" rx="26" fill="none" stroke="#e6c79c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.90"/>
 <rect x="30" y="30" width="480" height="900" rx="18" fill="none" stroke="#dfe7ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.26"/>
 <path d="M 52.0 41.0 L 54.3 49.7 L 63.0 52.0 L 54.3 54.3 L 52.0 63.0 L 49.7 54.3 L 41.0 52.0 L 49.7 49.7 Z" fill="none" stroke="#e6c79c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.80"/>

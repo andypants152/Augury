@@ -131,8 +131,16 @@
 <line x1="35.0" y1="186.3" x2="35.0" y2="190.5" w="1.2" color="#dfe7ff" op="0.1097211395090465"/>
 <line x1="35.0" y1="186.3" x2="30.8" y2="186.3" w="1.2" color="#dfe7ff" op="0.1097211395090465"/>
 <line x1="35.0" y1="186.3" x2="35.0" y2="182.2" w="1.2" color="#dfe7ff" op="0.1097211395090465"/>
-<path d="M 435.0 403.2 L 270.0 568.2 L 105.0 403.2 L 270.0 238.2 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 386.7 519.9 L 153.3 519.9 L 153.3 286.5 L 386.7 286.5 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 270.0 343.2 L 287.0 386.2 L 330.0 403.2 L 287.0 420.2 L 270.0 463.2 L 253.0 420.2 L 210.0 403.2 L 253.0 386.2 Z" fill="none" stroke="#dfe7ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.95"/>
+<line x1="270.0" y1="188.2" x2="288.0" y2="188.2" w="1.5" color="#dfe7ff" op="0.8"/>
+<line x1="270.0" y1="188.2" x2="270.0" y2="206.2" w="1.5" color="#dfe7ff" op="0.8"/>
+<line x1="270.0" y1="188.2" x2="252.0" y2="188.2" w="1.5" color="#dfe7ff" op="0.8"/>
+<line x1="270.0" y1="188.2" x2="270.0" y2="170.2" w="1.5" color="#dfe7ff" op="0.8"/>
+<line x1="270.0" y1="618.2" x2="283.0" y2="618.2" w="1.5" color="#dfe7ff" op="0.6"/>
+<line x1="270.0" y1="618.2" x2="270.0" y2="631.2" w="1.5" color="#dfe7ff" op="0.6"/>
+<line x1="270.0" y1="618.2" x2="257.0" y2="618.2" w="1.5" color="#dfe7ff" op="0.6"/>
+<line x1="270.0" y1="618.2" x2="270.0" y2="605.2" w="1.5" color="#dfe7ff" op="0.6"/>
 <rect x="16" y="16" width="508" height="928" rx="26" fill="none" stroke="#e6c79c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.90"/>
 <rect x="30" y="30" width="480" height="900" rx="18" fill="none" stroke="#dfe7ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.26"/>
 <path d="M 52.0 41.0 L 54.3 49.7 L 63.0 52.0 L 54.3 54.3 L 52.0 63.0 L 49.7 54.3 L 41.0 52.0 L 49.7 49.7 Z" fill="none" stroke="#e6c79c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.80"/>
