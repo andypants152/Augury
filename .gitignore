@@ -16,6 +16,7 @@ DerivedData/
 
 # Draft pipeline artifacts (regenerable: `swift tools/card-draft/montage.swift drafts`)
 drafts/_contact-sheet*.png
+drafts/layers/
 
 # Local review workspace (per-suit / per-major sheet scratch dirs)
 .scratch/

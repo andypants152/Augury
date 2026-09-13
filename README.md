@@ -5,8 +5,9 @@ line-art cards** with a **holographic foil finish that shifts as you tilt the de
 
 **One price ($9.99), yours forever. No subscription. No account. No internet.**
 
-> **Status: M2** — the 78-card `Arcana` content model, plus the draft generator and the
-> 78 first-pass **celestial line-art SVGs** in `drafts/`. The plan lives in [`roadmap.md`](roadmap.md).
+> **Status: M3** — the 78-card `Arcana` content model, the draft pipeline, and the full
+> deck **in the app bundle** (two-layer SVGs, actool-rasterized, ~8 MB, render-verified
+> in-app) with the first refine pass over all 78 done. The plan lives in [`roadmap.md`](roadmap.md).
 
 The promise (short form): the deck is **made once, done** — 78 cards authored once and
 committed as static SVGs, never changing. Canonical tarot meaning (upright + inverted).
@@ -37,10 +38,11 @@ Swift 5 language mode).
 - `Augury/` — the app target
   - `Models/Arcana.swift` — the `Arcana` / `ArcanaID` / `Suit` types
   - `Models/ArcanaCatalog.swift` — the 78 cards (names, keywords, upright + inverted meanings)
+  - `Assets.xcassets` — the card art: a shared `card-bg` + one line-art layer per card (SVG sources, rasterized by `actool`)
   - `AuguryApp.swift` / `ContentView.swift` — the app shell (grown in later milestones)
 - `AuguryTests/` — unit tests
-- `drafts/` — the 78 first-pass line-art SVGs (M2) + deck order; refined in M3, then committed to the bundle
-- `tools/card-draft/` — the design-time pipeline (never shipped): `generate.py` (specs → SVGs) and `montage.swift` (contact-sheet previews at 3 sizes)
+- `drafts/` — the 78 canonical line-art SVGs (the committed source of truth; refined in M3) + deck order. `layers/` (gitignored) is the derived two-layer split; `_contact-sheet*.png` are review artifacts
+- `tools/card-draft/` — the design-time pipeline (never shipped): `generate.py` (specs → SVGs + layer split), `montage.swift` (contact-sheet previews), `sync_assets.py` (layers → asset catalog, with validation)
 - `project.yml` — XcodeGen source of truth (the `.xcodeproj` is generated, not committed)
 - `roadmap.md` — the plan (milestones, sharp edges, metrics)
 

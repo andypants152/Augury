@@ -5,7 +5,10 @@ Turns per-arcana *celestial specs* into first-pass **line-art SVGs** in `drafts/
 
 This is a throwaway production tool — it is NOT shipped in the app. Its job is to
 make the M3 "refine" pass fast: emit a coherent, consistent set of drafts that a human
-then reviews and hand-tweaks into the committed 78 SVGs.
+then reviews and hand-tweaks into the committed 78 SVGs. Once approved, the drafts are
+the source of truth: each is split into a shared background + a transparent line-art
+layer (`drafts/layers/`, regenerable) and `sync_assets.py` copies those into the app's
+asset catalog, where `actool` rasterizes them for the ~8 MB bundle.
 
 Deterministic: the same run produces byte-identical SVGs (seeded per card), so drafts
 are reproducible.
@@ -348,6 +351,35 @@ def build_card(name, spec, seed):
     return svg_doc(layers)
 
 
+def build_card_art(name, spec, seed):
+    """The card's line-art layer on a TRANSPARENT canvas: starfield + figure +
+    frame + name, no background. Same rng sequence as build_card, so these are
+    exactly the non-background pixels of the draft. The app composites this over
+    the shared `card-bg` at render time (one gradient stored once instead of 79
+    times); `actool` rasterizes the sparse layer to a small bitmap for the car,
+    so the deck ships at ~8 MB instead of ~130+ MB."""
+    rng = random.Random(seed)
+    return svg_doc(starfield(rng) + spec + frame() + [nameplate(name)])
+
+
+def build_back(seed, include_bg=True):
+    """The card back — a crest, not a card: zodiac ring + eight-point star + crescent,
+    a slightly denser starfield, and the maker's mark. One file, made once.
+    `include_bg=False` writes the transparent line-art layer for the app."""
+    rng = random.Random(seed)
+    cx, cy = FX, FY
+    ring = [dot(cx + 170 * math.cos(a), cy + 170 * math.sin(a), 3.2, op=0.8)
+            for i, a in ((i, i * math.pi / 6 - math.pi / 2) for i in range(12))]
+    layers = bg() if include_bg else []
+    layers += starfield(rng, n=90)
+    layers += ring
+    layers += star(cx, cy, 120, points=8, inner=0.42, op=0.95)
+    layers += crescent(cx, cy + 14, 62, open=0.6, angle=math.pi / 2)
+    layers += frame()
+    layers += [nameplate("Augury")]
+    return svg_doc(layers)
+
+
 # ─────────────────────────── composition ───────────────────────────
 FX, FY = W / 2, H * 0.42        # figure centre (a little above middle; name sits at the bottom)
 
@@ -533,10 +565,33 @@ def main():
         with open(os.path.join(out_dir, card["file"]), "w") as f:
             f.write(build_card(card["name"], spec, seed))
 
+    # The card back (not a deck card, so it is not in _order.txt).
+    back_seed = seed_base * 1000 + len(DECK)
+    with open(os.path.join(out_dir, "card-back.svg"), "w") as f:
+        f.write(build_back(back_seed))
+
+    # Layer split for the app: the shared background + one transparent line-art
+    # layer per card (+ the back's art layer). Regenerable build input
+    # (gitignored) — `sync_assets.py` copies these into the asset catalog.
+    layer_dir = os.path.join(out_dir, "layers")
+    os.makedirs(layer_dir, exist_ok=True)
+    with open(os.path.join(layer_dir, "card-bg.svg"), "w") as f:
+        f.write(svg_doc(bg()))
+    for idx, card in enumerate(DECK):
+        seed = seed_base * 1000 + idx
+        spec = figure_for_major(card["name"], seed) if card["major"] \
+            else figure_for_minor(card["suit"], card["rank"], seed)
+        base = (card["file"][:-4] + ".svg")
+        with open(os.path.join(layer_dir, base), "w") as f:
+            f.write(build_card_art(card["name"], spec, seed))
+    with open(os.path.join(layer_dir, "card-back.svg"), "w") as f:
+        f.write(build_back(back_seed, include_bg=False))  # transparent art layer
+
     # Validate: every draft must be well-formed XML with the expected shape.
     import xml.etree.ElementTree as ET
     ok = bad = 0
-    for card in DECK:
+    cards = [dict(c) for c in DECK] + [{"file": "card-back.svg"}]
+    for card in cards:
         fn = os.path.join(out_dir, card["file"])
         try:
             root = ET.parse(fn).getroot()
@@ -551,7 +606,7 @@ def main():
             print(f"  THIN     {card['file']}: {drawing} drawing elements, shapes={sorted(shapes)}")
             continue
         ok += 1
-    print(f"{ok + bad} cards  |  valid {ok}  |  bad {bad}  →  {out_dir}/")
+    print(f"{len(cards)} files  |  valid {ok}  |  bad {bad}  →  {out_dir}/")
     sys.exit(1 if bad else 0)
 
 

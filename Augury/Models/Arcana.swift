@@ -91,4 +91,26 @@ struct Arcana: Identifiable, Codable, Hashable {
 
     /// The element for a minor (its suit's element); `nil` for majors.
     var element: String? { suit?.element }
+
+    /// The asset-catalog name of this card's line-art layer in `Assets.xcassets`
+    /// — must match the draft file name exactly, or the card renders blank.
+    ///
+    /// Majors are named from the display name (its file slug): "The High
+    /// Priestess" → `the-high-priestess`, "Strength" → `strength` — no forced
+    /// `the-` prefix, since six majors (Strength, Wheel of Fortune, Justice,
+    /// Death, Temperance, Judgement) traditionally take no article. Minors are
+    /// `suit-rank` from the id: `wandsAce` → `wands-ace`.
+    var assetName: String {
+        if isMajor {
+            return name.lowercased()
+                .replacingOccurrences(of: " ", with: "-")
+                .replacingOccurrences(of: "\u{2019}", with: "")
+                .replacingOccurrences(of: "'", with: "")
+        }
+        var out = ""
+        for ch in String(describing: id) {
+            if ch.isUppercase { out += "-\(ch.lowercased())" } else { out.append(ch) }
+        }
+        return out
+    }
 }

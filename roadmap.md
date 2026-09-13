@@ -100,8 +100,25 @@ deck, and each card reads as its arcana. Pass-1 fixes landed:
 - **The Emperor**: axis-aligned square + glints to fill the frame.
 - **The Fool**: spark de-emphasized so the figure leads.
 
-Next: final human approval of the 78 (the M3 sharp edge — eyeball `swift tools/card-draft/montage.swift drafts`),
-then commit the approved SVGs to the bundle, staged **22 majors → 56 minors**.
+The deck is now **in the app's bundle and render-verified**. Each card ships as two
+layers in `Assets.xcassets` (sources are canonical SVGs, diffable in git):
+
+- `card-bg` — the shared radial-glow background, stored **once** for all 79 faces.
+- the card's **line-art layer** — starfield + figure + frame + nameplate on transparent.
+
+`sync_assets.py` copies the layer split (derived by `generate.py`, gitignored) into the
+catalog; `actool` rasterizes each at 3x at build time. The sparse art layers keep the
+whole deck at **~8 MB** in the compiled catalog — a single full-card image per card would
+be ~130 MB. All 78 render-verified in-app via a cold-launch screenshot loop (checked per
+card for frame, starfield, and nameplate presence). Along the way this caught a real bug:
+six majors with no-article names (Strength, Wheel of Fortune, Justice, Death, Temperance,
+Judgement) resolved to nonexistent `the-*` assets and rendered as bare backgrounds —
+`assetName` is now derived from the display name, with a regression test.
+
+**Next: the final human art sign-off** — the M3 sharp edge. Eyeball
+`swift tools/card-draft/montage.swift drafts` (staged: 22 majors, then 56 minors); any
+fixes are small edits to `drafts/*.svg` + `generate.py`, then re-run `generate.py &&
+sync_assets.py`. Once the 78 are approved by eye, M3 is done and we move to **M4 (holo)**.
 
 ---
 
@@ -110,7 +127,7 @@ then commit the approved SVGs to the bundle, staged **22 majors → 56 minors**.
 | Piece | File | What it does |
 |---|---|---|
 | `Arcana` | `Models/Arcana.swift` | the 78: id, name, keywords, upright + inverted meaning. **The** content layer |
-| Card art | `Assets/*.svg` | 78 static **celestial line-art** SVGs, one consistent style. Made once, committed |
+| Card art | `Assets.xcassets` | two layers per face: the shared `card-bg` + the card's line-art layer — canonical SVGs (in `drafts/`) that `actool` rasterizes at 3x (~8 MB). Made once, committed |
 | `HoloFinish` | `Engine/HoloFinish.metal` + `Engine/HoloLayer.swift` | iridescent foil shader; samples **CoreMotion attitude** (tilt) → view angle → sheen. Live only while a card is face-up; Reduce-Motion-safe |
 | `MotionTilt` | `Engine/MotionTilt.swift` | wraps `CMMotionManager`; starts/stops with card state; no usage permission needed (attitude only); simulator/no-sensor → time-based fallback shimmer |
 | `Spread` | `Models/Spread.swift` | spread definitions: 1-card, 3-card, Celtic cross — positions + prompts |
@@ -135,8 +152,10 @@ motifs; a single consistent line weight + palette):
 2. **Draft** — `tools/card-draft` turns each spec into a first-pass line-art SVG.
 3. **Refine** — a human pass over all 78: *does it read as this arcana? is the line style
    consistent?* Fix per card. The main content work / the real production risk.
-4. **Commit** — the 78 final SVGs into the bundle. Done, forever. The holo is applied at
-   render time, so the committed SVGs stay clean (no baked-in holo).
+4. **Commit** — the 78 final SVGs into the bundle, done forever: `generate.py` derives
+   the two-layer split (shared `card-bg` + per-card line-art layer) and `sync_assets.py`
+   copies it into `Assets.xcassets`, where `actool` rasterizes it (~8 MB compiled).
+   The holo is applied at render time, so the committed SVGs stay clean (no baked-in holo).
 
 *De-risking:* stage it — the **22 majors first** (the entire free tier, a complete
 product), then the 56 minors. A good draft pass keeps the refine pass short.
