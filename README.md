@@ -54,5 +54,5 @@ Swift 5 language mode).
 - **Tactile, ritual feel.** The holo finish + deliberate pacing make a reading feel like
   handling a physical card. Calm, dark, quiet.
 - **Offline, no account.** No network beyond StoreKit. The deck ships in the bundle;
-  your reading journal lives on the device.
+  your daily journal lives on the device.
 - **Pay once.** $9.99 non-consumable, one honest unlock.

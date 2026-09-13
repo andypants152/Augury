@@ -53,7 +53,7 @@ Final pick is yours to confirm with an App Store search.
 3. **Tactile, ritual feel.** The holo finish + deliberate pacing make a reading feel like
    handling a physical card. Calm, dark, quiet.
 4. **Offline, no account.** No network beyond StoreKit. The deck ships in the bundle;
-   your reading journal lives on the device. CoreMotion attitude needs no permission.
+   your daily journal lives on the device. CoreMotion attitude needs no permission.
 5. **Respect the device.** The live holo runs **only while a card is face-up**, and pauses
    otherwise — no idle battery drain. Honors **Reduce Motion** (freezes the holo to a fixed
    angle) for vestibular safety.
@@ -65,8 +65,8 @@ Final pick is yours to confirm with an App Store search.
 
 **The loop:** choose a spread → the app shuffles the unlocked deck and deals face-down →
 you flip each card; it reveals its celestial line art **with a holo sheen that shifts as
-you tilt** → meaning (upright or inverted) is shown → optionally save the reading to your
-journal.
+you tilt** → meaning (upright or inverted) is shown → optionally save the reading to
+your **daily journal** (one 3-card entry per day).
 
 | | Free | $9.99 unlock (one-time) |
 |---|---|---|
@@ -74,10 +74,10 @@ journal.
 | Spreads | 1-card, 3-card (past/present/future) | + Celtic cross (10-card) |
 | Inverted meanings | ✓ | ✓ |
 | Holographic finish | ✓ (all cards) | ✓ |
-| Reading journal | 3 saved | unlimited |
+| Daily journal | 3 saved | unlimited |
 
 The **holo is universal** (a deliberate choice — the signature *vibe* is not paywalled;
-the paywall gates *content*: cards, spreads, journal). The free tier is genuinely usable —
+the paywall gates *content*: cards, spreads, daily journal). The free tier is genuinely usable —
 the 22 majors are a real, standalone deck.
 
 ---
@@ -132,7 +132,7 @@ sync_assets.py`. Once the 78 are approved by eye, M3 is done and we move to **M4
 | `MotionTilt` | `Engine/MotionTilt.swift` | wraps `CMMotionManager`; starts/stops with card state; no usage permission needed (attitude only); simulator/no-sensor → time-based fallback shimmer |
 | `Spread` | `Models/Spread.swift` | spread definitions: 1-card, 3-card, Celtic cross — positions + prompts |
 | `Reading` | `Engine/Reading.swift` | shuffles the unlocked deck, deals to positions, assigns upright/inverted per card. The one real "random" (a shuffle) |
-| `ReadingStore` | `Store/ReadingStore.swift` | the journal: saved readings (cards + positions + date + note); append-only, local JSON |
+| `ReadingStore` | `Store/ReadingStore.swift` | the daily journal: 3-card draws logged per day (cards + positions + date + note); append-only, local JSON |
 | `PurchaseManager` | `Store/PurchaseManager.swift` | StoreKit 2: fetch/purchase/restore; entitlement local, re-verified on launch |
 | UI | `UI/*.swift` | the table, draw + flip + reveal (holo on reveal), spreads, journal, paywall card |
 
@@ -185,12 +185,12 @@ reading product.
 | **M6** | Table → draw → flip → reveal (3-card), holo on reveal | ≤ 3 taps from cold launch to first revealed (holo) card; every card VoiceOver-labeled; works on the smallest supported iPhone |
 | **M7** | All spreads — 1-card, 3-card, Celtic cross | Celtic cross (10 face-down) lays out with no overflow on the smallest iPhone; all spreads deal + reveal correctly |
 
-### Phase 3 — Journal + purchase
+### Phase 3 — Daily journal + purchase
 
 | # | Milestone (scope) | Done when (measurable) |
 |---|---|---|
-| **M8** | `ReadingStore` — save / list / reopen a reading (+ optional note) | A saved reading survives kill + relaunch and reopens identically; store is append-only (test); free caps at 3 |
-| **M9** | Free/paid gating — free = 22 majors + 2 spreads + 3 journal; paid = 78 + all + unlimited | Free build deals only majors and enforces the journal cap (tests); one purchase lifts everything; paywall states the one-time price plainly |
+| **M8** | **Daily journal** — `ReadingStore`: draw three cards, save as today's entry (date-stamped); list / reopen past entries (+ optional note) | Drawing three and saving them to the daily journal lands an entry dated to the day; a saved entry survives kill + relaunch and reopens identically (cards, orientations, date, note); append-only (test); free caps at 3 |
+| **M9** | Free/paid gating — free = 22 majors + 2 spreads + 3 daily-journal entries; paid = 78 + all + unlimited | Free build deals only majors and enforces the daily-journal cap (tests); one purchase lifts everything; paywall states the one-time price plainly |
 | **M10** | StoreKit 2 — fetch/purchase/restore + entitlement + `.storekit` + DEBUG toggle | Simulator **4/4**: product fetches; purchase ⇒ full 78 + all spreads + unlimited journal; kill + relaunch persists via `currentEntitlements`; fresh install + Restore re-grants |
 
 ### Phase 4 — Ship
@@ -229,8 +229,8 @@ reading product.
 No backend, so no dashboards. The signals that matter:
 
 - **Return** — do people come back night after night? (a tarot app lives on habit)
-- **Journaling** — saved readings per user (local counter). A person who *logs* readings
-  is a person who's stuck. Watch this one.
+- **Daily journaling** — daily-journal entries per user (local counter). A person who
+  draws three and logs them day after day is a person who's stuck. Watch this one.
 - **The holo moment** — is it shared? The tilt-to-shimmer is the most screenshot-able part
   of the app; if people film/share it, that's your free marketing engine.
 - **Conversion** — free → $9.99; plus refund rate and rating from the App Store.
