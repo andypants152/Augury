@@ -84,23 +84,37 @@ the 22 majors are a real, standalone deck.
 
 ## Where we are
 
-**M1 + M2 complete. M3 in progress — first review pass over all 78 done.** The 78-card
-`Arcana` model + `ArcanaCatalog` are in (tests green: 78/78 cards, 156 meanings, 22/56 split,
-14 per suit, no duplicate keywords). The draft pipeline (`tools/card-draft`) is in: deterministic
+**M1 + M2 + M3 complete. The one-by-one rework of all 78 is done, signed off, and
+committed — the deck reads as *one* deck.** The 78-card `Arcana` model + `ArcanaCatalog`
+are in (tests green: 78/78 cards, 156 meanings, 22/56 split, 14 per suit, no duplicate
+keywords). The draft pipeline (`tools/card-draft`) is in: deterministic
 specs → 78 line-art SVGs in `drafts/`, one consistent style (indigo starfield, starlight lines,
-gold frame), each suit with a distinct celestial vocabulary, contact sheets at 3 sizes via
+gold frame), contact sheets at 3 sizes via
 `montage.swift`.
 
-The first review pass (all 78, in deck order, on the contact sheets): the deck reads as *one*
-deck, and each card reads as its arcana. Pass-1 fixes landed:
+The M3 refine was done **one card at a time, in deck order** — each card's figure
+improved in `generate.py`, regenerated, synced into the asset catalog, and verified by
+eye before the next one started. What the rework gave the deck:
 
-- **Cups** crescents now open **up** — the suit literally reads as cups (14 cards).
-- **Queens** (all 4 suits): the big crescent became a bowl that cradles the suit motif.
-- **The Tower**: its own pointed-roof keep silhouette (was sharing the Emperor's diamond).
-- **The Emperor**: axis-aligned square + glints to fill the frame.
-- **The Fool**: spark de-emphasized so the figure leads.
+- **Unmistakable suit motifs** (the 56 minors) — a star-tipped `wand()`, a rimmed-bowl
+  `chalice()`, a slim `blade()` with a star pommel, a star-in-circle `pentacle()`: each
+  suit reads as itself at contact-sheet size, and the courts (Page/Knight/Queen/King)
+  keep their own compositions.
+- **A distinct figure or composition for every major** — the Priestess between her
+  pillars, the Emperor within his square, the Lovers' angel over the choice, the
+  Chariot's opposed sphinxes, the seated lion of Strength, the Hermit on his summit;
+  then the final twelve: the turning Wheel, the weighing of Justice, the Hanged Man's
+  inverted figure and halo, Death as a star dying into the dawn, the angel of
+  Temperance mixing two chalices, the Devil's horned star over the bound, the struck
+  Tower and its exiled, the Star over the pouring figure, the moon-road between two
+  towers, the Sun's child and sunflowers, the trumpet of Judgement over the rising
+  dead, the dancer in the laurel of the World.
+- **Identity discipline** — the specs document who owns each motif (wings: the Lovers;
+  the ram: the Emperor; beasts: the Chariot/Strength; the pointed keep: the Tower; the
+  fluted gate: the Priestess; the crescent bowl: the cups; the two faces: the Sun and
+  the Moon), so the 78 stay one deck of distinct voices — the M3 sharp edge, held.
 
-The deck is now **in the app's bundle and render-verified**. Each card ships as two
+The deck is **in the app's bundle and render-verified**. Each card ships as two
 layers in `Assets.xcassets` (sources are canonical SVGs, diffable in git):
 
 - `card-bg` — the shared radial-glow background, stored **once** for all 79 faces.
@@ -115,10 +129,9 @@ six majors with no-article names (Strength, Wheel of Fortune, Justice, Death, Te
 Judgement) resolved to nonexistent `the-*` assets and rendered as bare backgrounds —
 `assetName` is now derived from the display name, with a regression test.
 
-**Next: the final human art sign-off** — the M3 sharp edge. Eyeball
-`swift tools/card-draft/montage.swift drafts` (staged: 22 majors, then 56 minors); any
-fixes are small edits to `drafts/*.svg` + `generate.py`, then re-run `generate.py &&
-sync_assets.py`. Once the 78 are approved by eye, M3 is done and we move to **M4 (holo)**.
+**Next: M4 — the holo.** `HoloFinish` + `MotionTilt` in `Engine/` (written, awaiting
+their commit): the one live layer — iridescent foil driven by device attitude,
+whisper-quiet, live only while a card is face-up, Reduce-Motion-safe.
 
 ---
 
