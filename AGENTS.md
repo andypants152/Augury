@@ -15,12 +15,14 @@ An iOS **SwiftUI tarot / oracle reading app you own**:
   driven by device tilt) applied to revealed cards — a *finish, not content*.
 - One price ($9.99), yours forever. Fully offline, no account, no backend.
 
-**Current status: M3 complete.** The one-by-one rework of all 78 is done and
-committed (drafts + `generate.py` + the catalog layers, together). The 78-card
-`Arcana` model, the draft pipeline, and the full deck are in the app bundle (two-layer
-SVGs, `actool`-rasterized, ~8 MB) and render-verified; each card's figure was improved
-in `tools/card-draft/generate.py`, card by card in deck order, regenerated, synced, and
-verified by eye. `roadmap.md` ("Where we are") is the canonical plan.
+**Current status: M4 complete.** M3 committed the rework of all 78 (the `Arcana`
+model, the draft pipeline, and the full deck in the app bundle — two-layer SVGs,
+`actool`-rasterized, ~8 MB — render-verified). M4 adds the holographic finish, the
+one live layer: `Engine/HoloFinish.metal` (foil on the line layer only — gold frame,
+silver nameplate, holo-foil rainbow on subject + starfield) + `Engine/MotionTilt.swift`
+(attitude-only, time-shimmer fallback, Reduce-Motion-safe), shown by the `ContentView`
+shell, which deals a card face-down and flips it over on a tap to reveal it under the
+holo. `roadmap.md` ("Where we are") is the canonical plan.
 
 ## Repo layout
 
@@ -132,7 +134,16 @@ These are the things that silently break or violate the product's promises.
 - **Holo rules** (M4): subtle — "a whisper, not a strobe" (low intensity); the
   `TimelineView` is paused and `MotionTilt` stops whenever no card is face-up (no idle
   draw / battery drain); **Reduce Motion** → fixed angle, frozen time; no sensor
-  (simulator) → smooth time-based shimmer. **Never write pixel-equality tests against
+  (simulator) → smooth time-based shimmer. **The sheen rides the line layer only** —
+  `holoFinish` attaches to the transparent art layer in `CardFace`, and the shader gates
+  on pixel alpha and picks a foil **per zone**: frame → gold, nameplate → silver,
+  subject + starfield → holo-foil rainbow; the shared `card-bg` stays perfectly still.
+  The zone geometry in `HoloFinish.metal` mirrors the scaffolding constants in
+  `generate.py` (frame inset 16, corner stars, nameplate baseline H−66) — if the
+  scaffolding moves, the shader zones must move with it. If the whole face starts
+  shimmering again, the modifier was re-attached to the composited card — move it back
+  to the art layer.
+  **Never write pixel-equality tests against
   the holo** — it is motion-driven and non-deterministic by design. The CoreMotion call
   must stay **attitude-only** (roll + pitch); anything health-adjacent would require
   `NSMotionUsageDescription`.
@@ -153,7 +164,7 @@ These are the things that silently break or violate the product's promises.
 | M1 | 78-card `Arcana` model | ✅ done |
 | M2 | Draft generator + 78 first-pass SVGs | ✅ done |
 | M3 | Refine + commit the 78 to the bundle | ✅ done — the 78 reworked one-by-one and committed (drafts + generator + catalog layers together) |
-| M4 | `HoloFinish` + `MotionTilt` | engine written in `Augury/Engine/` (check git status — uncommitted as of this writing) |
+| M4 | `HoloFinish` + `MotionTilt` | ✅ done — committed: the line-layer foil (gold frame, silver name, rainbow subject/starfield) + the deal→flip→reveal shell in `ContentView` |
 | M5 | `Reading` — shuffle + deal | planned → `Engine/Reading.swift` |
 | M6 | Table → draw → flip → reveal | planned → `UI/` |
 | M7 | All spreads (1-card, 3-card, Celtic cross) | planned → `Models/Spread.swift` |
@@ -164,7 +175,9 @@ These are the things that silently break or violate the product's promises.
 
 Files named in the roadmap but **not yet in the tree**: `Models/Spread.swift`,
 `Engine/Reading.swift`, `Store/ReadingStore.swift`, `Store/PurchaseManager.swift`,
-`UI/`. Don't be confused — the app today is the M3 browse shell (`ContentView`).
+`UI/`. Don't be confused — the app today is the M4 shell (`ContentView`): one card at
+a time — tap to flip it over, the holo on reveal. The full table + spreads land in
+`UI/` (M6+).
 
 ## Git & hygiene
 

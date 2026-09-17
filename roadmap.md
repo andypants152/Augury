@@ -84,8 +84,9 @@ the 22 majors are a real, standalone deck.
 
 ## Where we are
 
-**M1 + M2 + M3 complete. The one-by-one rework of all 78 is done, signed off, and
-committed — the deck reads as *one* deck.** The 78-card `Arcana` model + `ArcanaCatalog`
+**M1 + M2 + M3 + M4 complete.** The one-by-one rework of all 78 is done, signed off,
+and committed — the deck reads as *one* deck — and the holographic finish, the one
+live layer, is committed with it. The 78-card `Arcana` model + `ArcanaCatalog`
 are in (tests green: 78/78 cards, 156 meanings, 22/56 split, 14 per suit, no duplicate
 keywords). The draft pipeline (`tools/card-draft`) is in: deterministic
 specs → 78 line-art SVGs in `drafts/`, one consistent style (indigo starfield, starlight lines,
@@ -129,9 +130,15 @@ six majors with no-article names (Strength, Wheel of Fortune, Justice, Death, Te
 Judgement) resolved to nonexistent `the-*` assets and rendered as bare backgrounds —
 `assetName` is now derived from the display name, with a regression test.
 
-**Next: M4 — the holo.** `HoloFinish` + `MotionTilt` in `Engine/` (written, awaiting
-their commit): the one live layer — iridescent foil driven by device attitude,
-whisper-quiet, live only while a card is face-up, Reduce-Motion-safe.
+**M4 is done — the holo is committed.** `HoloFinish` + `MotionTilt` in `Engine/`: the
+one live layer — foil on the line layer (never the ground), driven by device attitude
+(a time-shimmer where there is no sensor), with per-zone palettes: gold frame, silver
+nameplate, holo-foil rainbow on subject + starfield. Whisper-quiet, live only while a
+card is face-up, Reduce-Motion-safe. The `ContentView` shell deals a card face-down,
+flips it over on a tap (3-D flip; a crossfade under Reduce Motion), and reveals it
+under the holo.
+
+**Next: M5 — `Reading`: the shuffle + the deal** (`Engine/Reading.swift`).
 
 ---
 
