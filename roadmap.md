@@ -138,7 +138,27 @@ card is face-up, Reduce-Motion-safe. The `ContentView` shell deals a card face-d
 flips it over on a tap (3-D flip; a crossfade under Reduce Motion), and reveals it
 under the holo.
 
-**Next: M5 — `Reading`: the shuffle + the deal** (`Engine/Reading.swift`).
+**M5 is done — the deal is the shuffle.** `Engine/Reading.swift`: `ReadingEngine`
+is the one real "random" in the app. A single `RandomNumberGenerator` (the
+platform CSPRNG in the app; a seeded splitmix64 in tests) drives everything that
+varies from reading to reading — a Fisher–Yates shuffle of the (unlocked) deck,
+the take of `count` cards in order, and each card's fall (upright or inverted,
+it's own fair coin). The dealt `Reading` is the ordered list of `DrawnCard`s
+(card + orientation); the order *is* the position — `Spread` (M7) will name
+them. Done-when, pinned in `ReadingTests`: 1,000 simulated 3-card deals, each
+three distinct cards, with every arcana's frequency inside a 4σ band of its
+expected count (the roadmap's "~2σ, no lucky card" bar, read as *intent* — a
+hard 2σ band across all 78 cells is one a perfect shuffle trips ~97% of the
+time, the worst of 78 cells typically sitting near 2.5σ, while a genuinely
+biased card sits at 5σ+; the seeded run's worst cell landed at 2.52σ); a full
+78-card deal is always an exact permutation; same seed, same deal. The
+`ContentView` shell is untouched — it is the M4 shell, and M6's 3-card table
+will deal through the engine.
+
+**Next: M6 — the table: draw → flip → reveal** (3-card), `UI/` — the M4
+shell's one card grows into the reading loop the product describes: a spread
+dealt face-down, flipped one at a time, each revealed under the holo with its
+fall's meaning.
 
 ---
 

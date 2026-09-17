@@ -15,14 +15,17 @@ An iOS **SwiftUI tarot / oracle reading app you own**:
   driven by device tilt) applied to revealed cards — a *finish, not content*.
 - One price ($9.99), yours forever. Fully offline, no account, no backend.
 
-**Current status: M4 complete.** M3 committed the rework of all 78 (the `Arcana`
+**Current status: M5 complete.** M3 committed the rework of all 78 (the `Arcana`
 model, the draft pipeline, and the full deck in the app bundle — two-layer SVGs,
 `actool`-rasterized, ~8 MB — render-verified). M4 adds the holographic finish, the
 one live layer: `Engine/HoloFinish.metal` (foil on the line layer only — gold frame,
 silver nameplate, holo-foil rainbow on subject + starfield) + `Engine/MotionTilt.swift`
 (attitude-only, time-shimmer fallback, Reduce-Motion-safe), shown by the `ContentView`
 shell, which deals a card face-down and flips it over on a tap to reveal it under the
-holo. `roadmap.md` ("Where we are") is the canonical plan.
+holo. M5 adds the deal engine, `Engine/Reading.swift`: `ReadingEngine` is the one real
+"random" in the app — a single `RandomNumberGenerator` (the platform CSPRNG in the
+app, a seeded splitmix64 in tests) drives a Fisher–Yates shuffle, the deal, and each
+card's upright/inverted fall. `roadmap.md` ("Where we are") is the canonical plan.
 
 ## Repo layout
 
@@ -47,10 +50,14 @@ Augury/
 │   └── Engine/
 │       ├── HoloFinish.metal  Metal shader: the iridescent foil ("the one live layer")
 │       ├── HoloLayer.swift   SwiftUI ViewModifier applying the shader (TimelineView + colorEffect)
-│       └── MotionTilt.swift  CMMotionManager attitude tracking (no permission needed)
+│       ├── MotionTilt.swift  CMMotionManager attitude tracking (no permission needed)
+│       └── Reading.swift     M5 deal: Orientation / DrawnCard / Reading / SeededRNG /
+│                             ReadingEngine — the one real "random" in the app
 ├── AuguryTests/
-│   ├── ArcanaTests.swift   78/78 cards, non-empty fields, 156 meanings, 22/56 split, 14/suit
-│   └── CardArtTests.swift  regression: assetName ↔ draft filename mapping
+│   ├── ArcanaTests.swift     78/78 cards, non-empty fields, 156 meanings, 22/56 split, 14/suit
+│   ├── CardArtTests.swift    regression: assetName ↔ draft filename mapping
+│   └── ReadingTests.swift    M5: 1,000-deal fairness (distinct, no lucky card, 50/50
+│                             falls), seed replay, full-deck permutation
 ├── drafts/                 ← the source of truth for the ART (committed)
 │   ├── _order.txt              deck order (22 majors, then wands/cups/swords/pentacles)
 │   ├── card-back.svg
@@ -147,6 +154,12 @@ These are the things that silently break or violate the product's promises.
   the holo** — it is motion-driven and non-deterministic by design. The CoreMotion call
   must stay **attitude-only** (roll + pitch); anything health-adjacent would require
   `NSMotionUsageDescription`.
+- **The deal is the only random.** All randomness in the app flows through
+  `ReadingEngine`'s single injected `RandomNumberGenerator` — the shuffle, the deal,
+  and each card's fall (M5). Do not add `Int.random` / `Bool.random` calls elsewhere
+  (the M4 shell predates the engine and still has one — M6 retires it). In tests,
+  use `SeededRNG` (splitmix64) so every deal is a pure function of its seed —
+  reproducible, and the future v2 "share the code" hook if it ever wakes up.
 - **Style constants** (in `generate.py`): 540×960 canvas (9:16); background
   `#141b3f → #090e24`; starlight lines `#dfe7ff`; gold frame `#e6c79c`; stroke widths
   3.4 / 2.4 / 1.5. Seventy-eight cards that don't look like *one* deck reads as a
@@ -165,7 +178,7 @@ These are the things that silently break or violate the product's promises.
 | M2 | Draft generator + 78 first-pass SVGs | ✅ done |
 | M3 | Refine + commit the 78 to the bundle | ✅ done — the 78 reworked one-by-one and committed (drafts + generator + catalog layers together) |
 | M4 | `HoloFinish` + `MotionTilt` | ✅ done — committed: the line-layer foil (gold frame, silver name, rainbow subject/starfield) + the deal→flip→reveal shell in `ContentView` |
-| M5 | `Reading` — shuffle + deal | planned → `Engine/Reading.swift` |
+| M5 | `Reading` — shuffle + deal | ✅ done — `Engine/Reading.swift`: Fisher–Yates shuffle + deal + per-card fall, single injected RNG, seeded for tests; 1,000-deal fairness pinned in `ReadingTests` |
 | M6 | Table → draw → flip → reveal | planned → `UI/` |
 | M7 | All spreads (1-card, 3-card, Celtic cross) | planned → `Models/Spread.swift` |
 | M8 | Daily journal | planned → `Store/ReadingStore.swift` |
@@ -174,10 +187,12 @@ These are the things that silently break or violate the product's promises.
 | M11–12 | Polish + App Store ship | planned |
 
 Files named in the roadmap but **not yet in the tree**: `Models/Spread.swift`,
-`Engine/Reading.swift`, `Store/ReadingStore.swift`, `Store/PurchaseManager.swift`,
-`UI/`. Don't be confused — the app today is the M4 shell (`ContentView`): one card at
-a time — tap to flip it over, the holo on reveal. The full table + spreads land in
-`UI/` (M6+).
+`Store/ReadingStore.swift`, `Store/PurchaseManager.swift`, `UI/`. Don't be
+confused — the app today is the M4 shell (`ContentView`): one card at a time — tap
+to flip it over, the holo on reveal. M5's deal engine (`Engine/Reading.swift`) is
+in, but the shell does not use it yet — its one-card deal predates M5, and M6's
+3-card table will deal through `ReadingEngine` and retire the shell's
+`Int.random`. The full table + spreads land in `UI/` (M6+).
 
 ## Git & hygiene
 
