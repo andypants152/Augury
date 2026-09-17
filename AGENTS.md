@@ -15,17 +15,20 @@ An iOS **SwiftUI tarot / oracle reading app you own**:
   driven by device tilt) applied to revealed cards — a *finish, not content*.
 - One price ($9.99), yours forever. Fully offline, no account, no backend.
 
-**Current status: M5 complete.** M3 committed the rework of all 78 (the `Arcana`
+**Current status: M6 complete.** M3 committed the rework of all 78 (the `Arcana`
 model, the draft pipeline, and the full deck in the app bundle — two-layer SVGs,
 `actool`-rasterized, ~8 MB — render-verified). M4 adds the holographic finish, the
 one live layer: `Engine/HoloFinish.metal` (foil on the line layer only — gold frame,
 silver nameplate, holo-foil rainbow on subject + starfield) + `Engine/MotionTilt.swift`
-(attitude-only, time-shimmer fallback, Reduce-Motion-safe), shown by the `ContentView`
-shell, which deals a card face-down and flips it over on a tap to reveal it under the
-holo. M5 adds the deal engine, `Engine/Reading.swift`: `ReadingEngine` is the one real
-"random" in the app — a single `RandomNumberGenerator` (the platform CSPRNG in the
-app, a seeded splitmix64 in tests) drives a Fisher–Yates shuffle, the deal, and each
-card's upright/inverted fall. `roadmap.md` ("Where we are") is the canonical plan.
+(attitude-only, time-shimmer fallback, Reduce-Motion-safe). M5 adds the deal engine,
+`Engine/Reading.swift`: `ReadingEngine` is the one real "random" in the app — a single
+`RandomNumberGenerator` (the platform CSPRNG in the app, a seeded splitmix64 in tests)
+drives a Fisher–Yates shuffle, the deal, and each card's upright/inverted fall. M6
+adds the table, `UI/ReadingTable.swift`: the three (past/present/future) dealt
+face-down on launch, one tap flips a card over under the holo, its (upright or
+inverted) meaning in the panel, "New reading" re-deals — the M4 one-card shell is
+retired (its card components moved to `UI/Card.swift` unchanged). `roadmap.md`
+("Where we are") is the canonical plan.
 
 ## Repo layout
 
@@ -53,6 +56,11 @@ Augury/
 │       ├── MotionTilt.swift  CMMotionManager attitude tracking (no permission needed)
 │       └── Reading.swift     M5 deal: Orientation / DrawnCard / Reading / SeededRNG /
 │                             ReadingEngine — the one real "random" in the app
+│   └── UI/
+│       ├── Card.swift        RevealCard / FlipCard / CardFace / CardBack — the card
+│       │                     components (overlay-composited, holo on the art layer)
+│       └── ReadingTable.swift M6 table: 3 cards dealt face-down, tap to flip +
+│                             reveal under the holo, meaning panel, new reading
 ├── AuguryTests/
 │   ├── ArcanaTests.swift     78/78 cards, non-empty fields, 156 meanings, 22/56 split, 14/suit
 │   ├── CardArtTests.swift    regression: assetName ↔ draft filename mapping
@@ -155,11 +163,11 @@ These are the things that silently break or violate the product's promises.
   must stay **attitude-only** (roll + pitch); anything health-adjacent would require
   `NSMotionUsageDescription`.
 - **The deal is the only random.** All randomness in the app flows through
-  `ReadingEngine`'s single injected `RandomNumberGenerator` — the shuffle, the deal,
-  and each card's fall (M5). Do not add `Int.random` / `Bool.random` calls elsewhere
-  (the M4 shell predates the engine and still has one — M6 retires it). In tests,
-  use `SeededRNG` (splitmix64) so every deal is a pure function of its seed —
-  reproducible, and the future v2 "share the code" hook if it ever wakes up.
+  `ReadingEngine` (M5) — the shuffle, the deal, and each card's fall. Do not add
+  `Int.random` / `Bool.random` calls elsewhere (the M4 shell had one; M6 retired
+  it — the table deals through the engine). In tests, use `SeededRNG` (splitmix64)
+  so every deal is a pure function of its seed — reproducible, and the future v2
+  "share the code" hook if it ever wakes up.
 - **Style constants** (in `generate.py`): 540×960 canvas (9:16); background
   `#141b3f → #090e24`; starlight lines `#dfe7ff`; gold frame `#e6c79c`; stroke widths
   3.4 / 2.4 / 1.5. Seventy-eight cards that don't look like *one* deck reads as a
@@ -179,7 +187,7 @@ These are the things that silently break or violate the product's promises.
 | M3 | Refine + commit the 78 to the bundle | ✅ done — the 78 reworked one-by-one and committed (drafts + generator + catalog layers together) |
 | M4 | `HoloFinish` + `MotionTilt` | ✅ done — committed: the line-layer foil (gold frame, silver name, rainbow subject/starfield) + the deal→flip→reveal shell in `ContentView` |
 | M5 | `Reading` — shuffle + deal | ✅ done — `Engine/Reading.swift`: Fisher–Yates shuffle + deal + per-card fall, single injected RNG, seeded for tests; 1,000-deal fairness pinned in `ReadingTests` |
-| M6 | Table → draw → flip → reveal | planned → `UI/` |
+| M6 | Table → draw → flip → reveal | ✅ done — `UI/ReadingTable.swift`: 3 cards dealt face-down on launch, tap to flip under the holo, meaning panel, one shared `MotionTilt` gated on *any* face-up; 1 tap to first reveal; the M4 shell's card components moved to `UI/Card.swift` |
 | M7 | All spreads (1-card, 3-card, Celtic cross) | planned → `Models/Spread.swift` |
 | M8 | Daily journal | planned → `Store/ReadingStore.swift` |
 | M9 | Free/paid gating | planned |
@@ -187,12 +195,12 @@ These are the things that silently break or violate the product's promises.
 | M11–12 | Polish + App Store ship | planned |
 
 Files named in the roadmap but **not yet in the tree**: `Models/Spread.swift`,
-`Store/ReadingStore.swift`, `Store/PurchaseManager.swift`, `UI/`. Don't be
-confused — the app today is the M4 shell (`ContentView`): one card at a time — tap
-to flip it over, the holo on reveal. M5's deal engine (`Engine/Reading.swift`) is
-in, but the shell does not use it yet — its one-card deal predates M5, and M6's
-3-card table will deal through `ReadingEngine` and retire the shell's
-`Int.random`. The full table + spreads land in `UI/` (M6+).
+`Store/ReadingStore.swift`, `Store/PurchaseManager.swift`. Don't be confused about
+the app today: `ContentView` is a thin root hosting `UI/ReadingTable` (M6) — the
+three cards dealt face-down, flipped one at a time, each revealed under the holo
+with its meaning. The table's 3-slot row is hard-coded for the 3-card spread;
+M7 makes it spread-driven (`Spread`) and adds the 1-card + Celtic cross.
+`UI/Card.swift` holds the card components the table reuses.
 
 ## Git & hygiene
 

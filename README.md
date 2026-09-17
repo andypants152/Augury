@@ -5,11 +5,11 @@ line-art cards** with a **holographic foil finish that shifts as you tilt the de
 
 **One price ($9.99), yours forever. No subscription. No account. No internet.**
 
-> **Status: M5** — the 78-card deck **in the app bundle** (M1–M3: the `Arcana`
-> content model, the draft pipeline, the full deck, two-layer SVGs, ~8 MB,
-> render-verified in-app), the holographic finish (M4), and the deal engine
-> (M5): a fair Fisher–Yates shuffle, the draw, and each card's upright/inverted
-> fall. The plan lives in [`roadmap.md`](roadmap.md).
+> **Status: M6** — the 78-card deck **in the app bundle** (M1–M3), the
+> holographic finish (M4), the deal engine (M5), and the reading table (M6):
+> three cards dealt face-down on launch, flipped one at a time to reveal each
+> under the holo, upright or inverted meaning included. The plan lives in
+> [`roadmap.md`](roadmap.md).
 
 The promise (short form): the deck is **made once, done** — 78 cards authored once and
 committed as static SVGs, never changing. Canonical tarot meaning (upright + inverted).
@@ -42,7 +42,8 @@ Swift 5 language mode).
   - `Models/ArcanaCatalog.swift` — the 78 cards (names, keywords, upright + inverted meanings)
   - `Assets.xcassets` — the card art: a shared `card-bg` + one line-art layer per card (SVG sources, rasterized by `actool`)
   - `Engine/` — `HoloFinish` + `MotionTilt` (the holo, M4) and `Reading` (M5: the shuffle + deal + fall — the one real random)
-  - `AuguryApp.swift` / `ContentView.swift` — the app shell (grown in later milestones)
+  - `UI/` — the reading table (M6): the card components + the 3-card past/present/future spread
+  - `AuguryApp.swift` / `ContentView.swift` — the app root (hosts the table)
 - `AuguryTests/` — unit tests
 - `drafts/` — the 78 canonical line-art SVGs (the committed source of truth; refined in M3) + deck order. `layers/` (gitignored) is the derived two-layer split; `_contact-sheet*.png` are review artifacts
 - `tools/card-draft/` — the design-time pipeline (never shipped): `generate.py` (specs → SVGs + layer split), `montage.swift` (contact-sheet previews), `sync_assets.py` (layers → asset catalog, with validation)

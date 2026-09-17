@@ -155,10 +155,26 @@ biased card sits at 5σ+; the seeded run's worst cell landed at 2.52σ); a full
 `ContentView` shell is untouched — it is the M4 shell, and M6's 3-card table
 will deal through the engine.
 
-**Next: M6 — the table: draw → flip → reveal** (3-card), `UI/` — the M4
-shell's one card grows into the reading loop the product describes: a spread
-dealt face-down, flipped one at a time, each revealed under the holo with its
-fall's meaning.
+**M6 is done — the table: draw → flip → reveal.** `UI/ReadingTable.swift` (the M4
+one-card shell is retired; its card components moved to `UI/Card.swift` unchanged,
+and the deal flows through the M5 engine): launch deals the three — past /
+present / future — face-down, one tap flips a card over to reveal it **under the
+holo** with its (upright or inverted) meaning in the panel below, "New reading"
+sweeps and re-deals. Roadmap bar met: **one tap** from cold launch to the first
+revealed (holo) card (≤ 3 asked). Every card is a single VoiceOver element
+(position + name + fall), the meaning panel and button are labeled, and the three
+equal thirds cannot overflow the smallest iPhone — verified at 390×844 pt on the
+smallest simulator, worst-case 95-character meaning included. The holo + CoreMotion
+stay live while *any* card is face-up and the scene is active — three cards, one
+sensor, no idle draw — and a two-screenshot diff confirms the sheen drifts (the
+simulator's time-shimmer: ~0.08 peak on the subject, ~0.26 on the bright
+nameplate) while the text and the ground stay pixel-still. `ContentView` is now a
+thin root hosting the table.
+
+**Next: M7 — all spreads**: `Models/Spread.swift` — the 1-card, the 3-card, and the
+Celtic cross, with names + prompts; the table generalizes from its hard-coded
+3-slot row to spread-driven layout. The cross's "10 face-down, no overflow on the
+smallest iPhone" bar is the meaty part.
 
 ---
 
