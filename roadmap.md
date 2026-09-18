@@ -171,10 +171,33 @@ simulator's time-shimmer: ~0.08 peak on the subject, ~0.26 on the bright
 nameplate) while the text and the ground stay pixel-still. `ContentView` is now a
 thin root hosting the table.
 
-**Next: M7 — all spreads**: `Models/Spread.swift` — the 1-card, the 3-card, and the
-Celtic cross, with names + prompts; the table generalizes from its hard-coded
-3-slot row to spread-driven layout. The cross's "10 face-down, no overflow on the
-smallest iPhone" bar is the meaty part.
+**M7 is done — all spreads.** `Models/Spread.swift` — the three spreads, each a
+named list of positions (name + prompt + layout point, in card units, in deal
+order): the **1-card** (a daily pull — one "Today" position), the **3-card**
+(past / present / future — M6's spread, unchanged), and the **Celtic cross**
+(the classic ten: the cross — present, crossing, foundation, past, crown —
+and the staff — near future, self, environment, hopes & fears, outcome). The
+**crossing card lies at 90°** over the present, as on a physical table.
+`UI/SpreadLayout.swift` — the pure, testable half: the engine takes the
+spec's rotation-aware bounding box, scales it to fit whatever space the table
+leaves, and centers it; every card keeps the 9:16 ratio. The M6 table is now
+**spread-driven**: a picker chooses the spread, the deal still flows through
+the M5 engine (count = the spread's — the engine was already general; only the
+names came now), the cross re-scales its ten as the meaning panel grows, and
+the 1/3-card slots keep M6's labels + look. Roadmap bar met: **ten face-down,
+no overflow on the smallest iPhone** — pinned exactly in
+`AuguryTests/SpreadTests.swift` (all ten rotation-aware boxes inside the 17e's
+card area, face-down and at the 95-char worst case; only the crossing pair
+overlaps; 9:16 held at every size) and screenshot-verified on the 17e. All
+three spreads are available here ungated — the free/paid split (free =
+1 + 3, paid = + the cross) is **content gating, M9's job**, and the deck stays
+full until M9 arrives.
+
+**Next: M8 — the daily journal**: `Store/ReadingStore.swift` — draw three and
+save them as today's entry (date-stamped); list / reopen past entries
+(+ optional note); a saved entry survives kill + relaunch and reopens
+identically (cards, orientations, date, note); append-only; the free cap of
+3 entries is M9's gating, not the store's.
 
 ---
 
