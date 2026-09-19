@@ -135,6 +135,7 @@ struct ReadingTable: View {
                 let drawn = reading?.draws[i]
 
                 RevealCard(card: drawn?.card ?? deck[0],
+                            orientation: drawn?.orientation ?? .upright,
                             faceUp: isUp,
                             reduceMotion: reduceMotion,
                             tilt: tilt,

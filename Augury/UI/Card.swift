@@ -4,8 +4,15 @@ import SwiftUI
 /// back, with a 3D flip between them. Under Reduce Motion, a crossfade
 /// instead of rotation. `isFaceUp` is the scene-aware revealed state
 /// (`faceUp && active`) — it gates the holo, which the front face carries.
+///
+/// The card's **fall** (`orientation`) is how it rests once revealed: an
+/// inverted card shows its art a half-turn from upright — the *face*
+/// rotates, the back never does (a fall is a property of the face, and the
+/// backs of a real deck stay uniform).
 struct RevealCard: View {
     let card: Arcana
+    /// How the card fell — the revealed face is rotated to match.
+    let orientation: Orientation
     let faceUp: Bool
     let reduceMotion: Bool
     let tilt: MotionTilt
@@ -16,12 +23,12 @@ struct RevealCard: View {
             ZStack {
                 CardBack()
                     .opacity(faceUp ? 0 : 1)
-                CardFace(arcana: card, tilt: tilt, isFaceUp: isFaceUp)
+                CardFace(arcana: card, orientation: orientation, tilt: tilt, isFaceUp: isFaceUp)
                     .opacity(faceUp ? 1 : 0)
             }
         } else {
             FlipCard(angle: faceUp ? 0 : 180) {
-                CardFace(arcana: card, tilt: tilt, isFaceUp: isFaceUp)
+                CardFace(arcana: card, orientation: orientation, tilt: tilt, isFaceUp: isFaceUp)
             } back: {
                 CardBack()
             }
@@ -78,7 +85,9 @@ struct CardBack: View {
     }
 }
 
-/// One face-up card: the shared `card-bg` with this card's line-art layer on top.
+/// One face-up card: the shared `card-bg` with this card's line-art layer on
+/// top, rotated to show how it fell (upright as authored, inverted a
+/// half-turn).
 ///
 /// The art is an `.overlay` of the background (not a `ZStack` of two resizable
 /// images): an overlay is proposed the exact size of the view it modifies, so
@@ -89,8 +98,20 @@ struct CardBack: View {
 /// The holo finish is attached to the **art layer only**, here: the shader
 /// gates on pixel alpha, so the sheen rides the ink (frame, starfield,
 /// nameplate, figure) and the shared background stays perfectly still.
+///
+/// **The fall rotates the *whole face*, and it is the last step** — applied
+/// after `holoFinish`: the shader picks its foil zone from the art layer's
+/// own pixels (frame → gold, nameplate → silver, subject + starfield →
+/// rainbow), so a rotation applied *before* the effect would move the ink
+/// out from under its zone. Rotated after it, every zone keeps its foil, and
+/// the sheen rides the turned card the way foil on a real reversed card
+/// would. (The shared background is a radial glow — turning it with the art
+/// is not perceptible, and it belongs to the front of the card, so it
+/// turns.)
 struct CardFace: View {
     let arcana: Arcana
+    /// How the card fell — the face is rotated a half-turn when inverted.
+    let orientation: Orientation
     let tilt: MotionTilt
     /// The scene-aware revealed state — gates the holo (pairs with
     /// `MotionTilt.setFaceUp` for the CoreMotion start/stop).
@@ -107,5 +128,10 @@ struct CardFace: View {
                     .resizable()
                     .holoFinish(tilt, isFaceUp: isFaceUp)
             )
+            // The fall: an inverted card lies a half-turn from upright —
+            // figure, starfield, frame, and nameplate together, the way a
+            // physical reversed card rests. *Outside* the holo: the shader's
+            // zones live in the art layer's own space (see above).
+            .rotationEffect(.degrees(orientation.rotation))
     }
 }

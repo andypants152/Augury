@@ -176,6 +176,15 @@ These are the things that silently break or violate the product's promises.
   the layers always align. A `ZStack` of two fully-flexible `.resizable()` images is
   ambiguous and distorts the card. The 9:16 ratio (`540/960`) is applied to the
   *background image* itself.
+- **The fall rotates the *face* — never the back, and never before the holo.**
+  An inverted card renders its whole face a half-turn (`Orientation.rotation`,
+  applied in `CardFace` as a `rotationEffect` on the *composited* face — figure,
+  starfield, frame, and nameplate turn together, the way a physical reversed card
+  rests). The rotation sits **after** `holoFinish`: the shader's zones (frame →
+  gold, nameplate → silver, subject → rainbow) are anchored in the art layer's own
+  pixel space, so a rotation before the effect would move the ink out from under its
+  foil. The card *back* is never rotated (a fall is a property of the face; the
+  backs of a real deck stay uniform, so a face-down card must not hint at it).
 - **The deck is made once, done.** Never add runtime art generation, daily content, or
   rotation. If a requirement seems to need "cards that change", push back — the one
   sanctioned live layer is the holo finish. (Runtime generation is parked as a v2 *opt-in*,

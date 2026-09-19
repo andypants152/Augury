@@ -155,7 +155,7 @@ struct JournalView: View {
             HStack(spacing: 3) {
                 let w: CGFloat = 26
                 ForEach(Array(entry.reading.draws.enumerated()), id: \.offset) { _, drawn in
-                    CardFace(arcana: drawn.card, tilt: rowTilt, isFaceUp: false)
+                    CardFace(arcana: drawn.card, orientation: drawn.orientation, tilt: rowTilt, isFaceUp: false)
                         .frame(width: w, height: w * 16.0 / 9.0)
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                         .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.white.opacity(0.12)))
@@ -350,6 +350,7 @@ struct JournalDetailView: View {
                 let isUp = faceUp[i]
                 VStack(spacing: 6) {
                     RevealCard(card: drawn?.card ?? Arcana.all[0],
+                                orientation: drawn?.orientation ?? .upright,
                                 faceUp: isUp,
                                 reduceMotion: reduceMotion,
                                 tilt: tilt,

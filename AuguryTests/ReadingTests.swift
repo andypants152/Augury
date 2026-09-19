@@ -125,6 +125,19 @@ final class ReadingTests: XCTestCase {
         XCTAssertEqual(Orientation.inverted.label, "inverted")
     }
 
+    // ── the fall drives the art ─────────────────────────────────────────────
+
+    /// The fall is a *rendering* decision as much as a meaning one: upright
+    /// shows the face as authored, inverted turns the whole face a half-turn
+    /// (the art lies upside down, the way a physical reversed card does).
+    /// Pinned at this one seam — `Orientation.rotation`, consumed by
+    /// `CardFace` — so a "just swap the text" change cannot silently
+    /// un-rotate the art.
+    func testFaceRotationFollowsTheFall() {
+        XCTAssertEqual(Orientation.upright.rotation, 0)
+        XCTAssertEqual(Orientation.inverted.rotation, 180)
+    }
+
     // ── edge counts ──────────────────────────────────────────────────────────
 
     func testEmptyAndFullDeals() {

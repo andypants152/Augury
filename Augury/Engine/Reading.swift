@@ -13,6 +13,14 @@ enum Orientation: String, Codable, Hashable, CaseIterable {
 
     /// "upright" / "inverted" — for labels and VoiceOver (M6).
     var label: String { rawValue }
+
+    /// The in-plane rotation the card's **face** takes to show the fall:
+    /// upright as authored, inverted a half-turn — the art lies upside down,
+    /// the way a physical card rests reversed on a table (figure, starfield,
+    /// frame, and nameplate all turn together). The card *back* never takes
+    /// this: a fall is a property of the face, and the backs of a real deck
+    /// stay uniform, so a face-down card gives no hint of how it will fall.
+    var rotation: Double { self == .inverted ? 180 : 0 }
 }
 
 // MARK: - DrawnCard

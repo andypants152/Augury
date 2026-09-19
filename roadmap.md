@@ -227,6 +227,13 @@ note field). The M8 debug hooks (`-auguryJournal <n>` seeds `n` days back,
 `-auguryJournalOpen`, `-auguryJournalDetail`) join the table's for the
 passes.
 
+**Patch after M8 — inverted cards actually invert.** A card that fell inverted
+now renders its art a half-turn from upright: the whole face rotates (figure,
+starfield, frame, and nameplate together — the way a physical reversed card
+rests). The card back never rotates (a fall is a property of the face; the
+backs stay uniform), and the rotation is applied *outside* the holo so its
+zones (gold frame, silver nameplate, rainbow subject) keep their foil.
+
 **Next: M9 — free/paid gating**: free = 22 majors + the 1- and 3-card spreads
 + 3 journal entries; paid = the full 78 + the Celtic cross + unlimited
 journal. One $9.99 non-consumable unlocks everything at once (the deck is the
