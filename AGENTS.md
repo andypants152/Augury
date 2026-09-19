@@ -13,9 +13,12 @@ An iOS **SwiftUI tarot / oracle reading app you own**:
   rotation. The deck is permanent.
 - The **one live rendering layer** is a **holographic foil finish** (a Metal shader
   driven by device tilt) applied to revealed cards — a *finish, not content*.
+- **A daily journal** (M8): a three-card reading saved as today's date-stamped
+  entry; past days reopen — cards, meanings, note — append-only, local JSON.
+  The app's only growing state.
 - One price ($9.99), yours forever. Fully offline, no account, no backend.
 
-**Current status: M7 complete.** M3 committed the rework of all 78 (the `Arcana`
+**Current status: M8 complete.** M3 committed the rework of all 78 (the `Arcana`
 model, the draft pipeline, and the full deck in the app bundle — two-layer SVGs,
 `actool`-rasterized, ~8 MB — render-verified). M4 adds the holographic finish, the
 one live layer: `Engine/HoloFinish.metal` (foil on the line layer only — gold frame,
@@ -33,7 +36,15 @@ named, prompted positions in deal order) + `UI/SpreadLayout.swift` (pure layout:
 scale the spec to fit, rotation-aware — the cross's crossing card lies at 90° over
 the present); a picker chooses the spread, the deal still flows through the M5 engine,
 and the cross's ten face-down fit the smallest iPhone (pinned in
-`AuguryTests/SpreadTests.swift`). `roadmap.md` ("Where we are") is the canonical plan.
+`AuguryTests/SpreadTests.swift`). M8 adds the **daily journal**:
+`Store/ReadingStore.swift` (one entry per day — a same-day re-save updates in
+place, keeping the day's stamp and the user's note; append-only, local JSON,
+uncapped — the free-tier cap is M9's gate above it) + `UI/JournalView.swift`
+(the day list, newest first; a day reopened flips its three up under the holo
+with an editable note). The root (`ContentView`) owns the one store and swaps
+the two rooms — table / journal — by opacity, so a trip to the journal never
+loses the table's deal, and a hidden table pauses the holo (no idle draw).
+`roadmap.md` ("Where we are") is the canonical plan.
 
 ## Repo layout
 
@@ -50,32 +61,45 @@ Augury/
 │   │   ├── card-back.imageset  the card back
 │   │   └── <name>.imageset/    78 line-art layers, one per card (SVG source + Contents.json)
 │   ├── AuguryApp.swift     @main entry
-│   ├── ContentView.swift   thin root hosting the table (`UI/ReadingTable`)
+│   ├── ContentView.swift   root: owns the one `ReadingStore`; hosts the two
+│   │                       rooms (the table / the journal), opacity-swapped
 │   ├── Models/
 │   │   ├── Arcana.swift        Suit / ArcanaID (78 cases) / Arcana types + assetName mapping
 │   │   ├── ArcanaCatalog.swift the 78 cards: names, keywords, upright + inverted meanings
 │   │   └── Spread.swift        the spreads (M7): 1-card / 3-card / Celtic cross —
 │   │                           named + prompted positions in deal order, layout in card units
-│   └── Engine/
+│   ├── Engine/
 │       ├── HoloFinish.metal  Metal shader: the iridescent foil ("the one live layer")
 │       ├── HoloLayer.swift   SwiftUI ViewModifier applying the shader (TimelineView + colorEffect)
 │       ├── MotionTilt.swift  CMMotionManager attitude tracking (no permission needed)
 │       └── Reading.swift     M5 deal: Orientation / DrawnCard / Reading / SeededRNG /
 │                             ReadingEngine — the one real "random" in the app
+│   ├── Store/
+│   │   └── ReadingStore.swift M8 journal: `JournalEntry` / `ReadingStore` — one per
+│   │                         day (upsert, stamp + note preserved), local JSON,
+│   │                         atomic writes, corrupt-file quarantine, uncapped (M9's
+│   │                         free-tier cap sits above it)
 │   └── UI/
 │       ├── Card.swift        RevealCard / FlipCard / CardFace / CardBack — the card
 │       │                     components (overlay-composited, holo on the art layer)
 │       ├── SpreadLayout.swift M7 pure layout: card-unit spec → rotation-aware bounds →
 │       │                       scale-to-fit + center (the cross's 90° crossing card included)
-│       └── ReadingTable.swift M6/M7 table: spread picker, dealt face-down, tap to flip +
-│                             reveal under the holo, meaning panel, new reading
+│       ├── ReadingTable.swift M6/M7 table: spread picker, dealt face-down, tap to flip +
+│       │                       reveal under the holo, meaning panel, new reading, the M8
+│       │                       save row + journal button
+│       └── JournalView.swift  M8 journal: the day list (newest first) + a day reopened —
+│                              cards flip up under the holo, note field; rows use a
+│                              motion source that is never started
 ├── AuguryTests/
 │   ├── ArcanaTests.swift     78/78 cards, non-empty fields, 156 meanings, 22/56 split, 14/suit
 │   ├── CardArtTests.swift    regression: assetName ↔ draft filename mapping
 │   ├── ReadingTests.swift    M5: 1,000-deal fairness (distinct, no lucky card, 50/50
 │   │                         falls), seed replay, full-deck permutation
-│   └── SpreadTests.swift     M7: spread catalog, canonical cross order, distinct deals,
-│                             no overflow on the smallest iPhone, only-the-crossing overlap
+│   ├── SpreadTests.swift     M7: spread catalog, canonical cross order, distinct deals,
+│   │                         no overflow on the smallest iPhone, only-the-crossing overlap
+│   └── ReadingStoreTests.swift M8: one-per-day upsert (stamp + note preserved),
+│                             kill+relaunch identity, note mutation, corrupt-file
+│                             quarantine, uncapped
 ├── drafts/                 ← the source of truth for the ART (committed)
 │   ├── _order.txt              deck order (22 majors, then wands/cups/swords/pentacles)
 │   ├── card-back.svg
@@ -185,6 +209,17 @@ These are the things that silently break or violate the product's promises.
   supported iPhone) is the bar: "ten face-down, no overflow" is pinned in
   `SpreadTests` at exactly the 17e's card-area size, in both states. If a spread
   stops fitting, fix the spec (or the chrome) and let the engine scale.
+- **The journal is the app's only growing state** (M8): `ReadingStore` keeps
+  one entry per calendar day — local JSON, append-only, uncapped. A same-day
+  re-save updates in place (same id, same first-saved stamp, **note
+  preserved**); never add a delete, a re-date, or a cap inside the store —
+  the free tier's 3-entry cap is M9's gate, applied *above* it. UI rules:
+  the table's "Save to journal" row appears only when all *three* are
+  revealed (the 1-card and the cross never show it — the v1 journal is the
+  three-card ritual); the journal's rows render a *static* foil (their
+  motion source is never started — the live holo belongs to the day's
+  detail, where the cards are face-up); a hidden table pauses the holo the
+  same way (no idle draw).
 - **Style constants** (in `generate.py`): 540×960 canvas (9:16); background
   `#141b3f → #090e24`; starlight lines `#dfe7ff`; gold frame `#e6c79c`; stroke widths
   3.4 / 2.4 / 1.5. Seventy-eight cards that don't look like *one* deck reads as a
@@ -206,18 +241,20 @@ These are the things that silently break or violate the product's promises.
 | M5 | `Reading` — shuffle + deal | ✅ done — `Engine/Reading.swift`: Fisher–Yates shuffle + deal + per-card fall, single injected RNG, seeded for tests; 1,000-deal fairness pinned in `ReadingTests` |
 | M6 | Table → draw → flip → reveal | ✅ done — `UI/ReadingTable.swift`: 3 cards dealt face-down on launch, tap to flip under the holo, meaning panel, one shared `MotionTilt` gated on *any* face-up; 1 tap to first reveal; the M4 shell's card components moved to `UI/Card.swift` |
 | M7 | All spreads (1-card, 3-card, Celtic cross) | ✅ done — `Models/Spread.swift` + `UI/SpreadLayout.swift`: picker-driven table; the cross's ten face-down fit the smallest iPhone (unit-pinned + screenshot-verified); all three ungated until M9's content gating |
-| M8 | Daily journal | planned → `Store/ReadingStore.swift` |
+| M8 | Daily journal | ✅ done — `Store/ReadingStore.swift` + `UI/JournalView.swift`: one-per-day upsert (stamp + note preserved), kill+relaunch identity, local JSON, uncapped (M9's cap is above it); the root owns the store and swaps the two rooms by opacity; save row + journal button in the table |
 | M9 | Free/paid gating | planned |
 | M10 | StoreKit 2 | planned → `Store/PurchaseManager.swift` |
 | M11–12 | Polish + App Store ship | planned |
 
 Files named in the roadmap but **not yet in the tree**:
-`Store/ReadingStore.swift`, `Store/PurchaseManager.swift`. Don't be confused about
-the app today: `ContentView` is a thin root hosting `UI/ReadingTable` (M6, M7-
-spread-driven) — the chosen spread (one card, three, or the Celtic cross, via the
-picker) dealt face-down, flipped one at a time, each revealed under the holo with
-its meaning; the layout is spec-driven through `UI/SpreadLayout`, never hard-coded
-sizes. `UI/Card.swift` holds the card components the table reuses.
+`Store/PurchaseManager.swift`, `UI/Paywall.swift`. Don't be confused about
+the app today: `ContentView` owns the one `ReadingStore` and hosts two rooms
+— the table (`UI/ReadingTable`, M6, M7-spread-driven: the chosen spread dealt
+face-down, flipped one at a time, each revealed under the holo with its
+meaning; the layout is spec-driven through `UI/SpreadLayout`, never hard-coded
+sizes; M8 adds the save row + the journal button) and the journal
+(`UI/JournalView`, M8: the day list, a day reopened). `UI/Card.swift` holds
+the card components both rooms reuse.
 
 ## Git & hygiene
 

@@ -193,11 +193,51 @@ three spreads are available here ungated — the free/paid split (free =
 1 + 3, paid = + the cross) is **content gating, M9's job**, and the deck stays
 full until M9 arrives.
 
-**Next: M8 — the daily journal**: `Store/ReadingStore.swift` — draw three and
-save them as today's entry (date-stamped); list / reopen past entries
-(+ optional note); a saved entry survives kill + relaunch and reopens
-identically (cards, orientations, date, note); append-only; the free cap of
-3 entries is M9's gating, not the store's.
+**M8 is done — the daily journal.** `Store/ReadingStore.swift` +
+`UI/JournalView.swift` — the roadmap's loop, completed: draw three and save
+them as today's entry (date-stamped); the journal lists the days newest-first
+and reopens any day — its three cards flip up again **under the holo**,
+meanings reread one at a time, and the day's note sits below, editable.
+Load-bearing semantics, pinned in `AuguryTests/ReadingStoreTests.swift`
+(11 tests): **one entry per day** — a same-day re-save updates in place,
+keeping the day's identity, its first-saved stamp, and the user's note, with
+every earlier day untouched; a saved entry **survives kill + relaunch and
+reopens identically** (deep value equality: cards, orientations, date, note);
+**append-only** — the only field mutation the journal allows is the note,
+there is no delete by design; **local JSON in Application Support** — atomic
+writes, and a corrupt file is quarantined with a timestamp (never destroyed,
+neither wedged); and the store is **uncapped on purpose** — the free tier's
+3-entry cap is M9's gating, applied above the store, not inside it. The
+`ContentView` root now owns the one `ReadingStore` (the app's only growing
+state), shared by both rooms through the environment, and swaps them with a
+crossfade — both stay in the hierarchy (opacity-toggled, not removed), so a
+trip to the journal never loses the table's deal, and the table's holo +
+CoreMotion pause while hidden (a hidden card is not a face-up card — no
+sensor, no idle draw). The table gains a **"Save to journal"** row that
+appears once all three are revealed (the 1-card and the cross never show it
+— the v1 journal is the three-card ritual) and a **"Journal"** button (its
+count as a badge) beside "New reading". The journal's rows show their three
+cards as a small *static* foil — the live holo belongs to the day's detail,
+where the cards are face-up and its sensor is running; the rows' motion
+source is never started. Verified: all 50 tests green; in-app screenshot
+passes on the smallest simulator — the table (face-down; revealed, with the
+save row), the journal list (five seeded days, newest first, the oldest
+noted), and a day reopened (cards flipped up under the holo, meaning panel,
+note field). The M8 debug hooks (`-auguryJournal <n>` seeds `n` days back,
+`-auguryJournalOpen`, `-auguryJournalDetail`) join the table's for the
+passes.
+
+**Next: M9 — free/paid gating**: free = 22 majors + the 1- and 3-card spreads
++ 3 journal entries; paid = the full 78 + the Celtic cross + unlimited
+journal. One $9.99 non-consumable unlocks everything at once (the deck is the
+content layer — `ArcanaCatalog` is already the 22/56 split), so the gate is a
+single entitlement consulted at three points: which cards the engine shuffles
+from, which spreads the picker offers, and how many journal entries the store
+keeps (the cap lives *above* the store — M8's is uncapped). `PurchaseManager`
+(`Store/PurchaseManager.swift`) fetches the product, gates the UI to the
+tier, and `UI/Paywall.swift` states the one-time price plainly; a fresh
+free build must deal only majors, offer two spreads, and stop the journal at
+3 (tests), with one purchase lifting all three.
 
 ---
 
@@ -268,7 +308,7 @@ reading product.
 
 | # | Milestone (scope) | Done when (measurable) |
 |---|---|---|
-| **M8** | **Daily journal** — `ReadingStore`: draw three cards, save as today's entry (date-stamped); list / reopen past entries (+ optional note) | Drawing three and saving them to the daily journal lands an entry dated to the day; a saved entry survives kill + relaunch and reopens identically (cards, orientations, date, note); append-only (test); free caps at 3 |
+| **M8** | **Daily journal** — `ReadingStore`: draw three cards, save as today's entry (date-stamped); list / reopen past entries (+ optional note) | Drawing three and saving them to the daily journal lands an entry dated to the day; a saved entry survives kill + relaunch and reopens identically (cards, orientations, date, note); append-only (test); the free cap of 3 is M9's gate — M8's store is uncapped (there is no free/paid state yet to consult) |
 | **M9** | Free/paid gating — free = 22 majors + 2 spreads + 3 daily-journal entries; paid = 78 + all + unlimited | Free build deals only majors and enforces the daily-journal cap (tests); one purchase lifts everything; paywall states the one-time price plainly |
 | **M10** | StoreKit 2 — fetch/purchase/restore + entitlement + `.storekit` + DEBUG toggle | Simulator **4/4**: product fetches; purchase ⇒ full 78 + all spreads + unlimited journal; kill + relaunch persists via `currentEntitlements`; fresh install + Restore re-grants |
 

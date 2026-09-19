@@ -23,6 +23,19 @@ import SwiftUI
 struct ReadingTable: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+    /// The journal (M8): the app's store, shared from the root.
+    @EnvironmentObject private var store: ReadingStore
+
+    /// The journal room (M8) — where "Journal" goes, and whether this table
+    /// is hidden behind it (which un-lives the holo: a hidden card is not a
+    /// face-up card — no CoreMotion, no idle draw).
+    private let isHidden: Bool
+    private let onOpenJournal: () -> Void
+
+    init(isHidden: Bool = false, onOpenJournal: @escaping () -> Void = {}) {
+        self.isHidden = isHidden
+        self.onOpenJournal = onOpenJournal
+    }
 
     /// One shared motion source for the whole table: CoreMotion starts while
     /// any card is revealed, stops when none are — ten cards, one sensor.
@@ -44,8 +57,13 @@ struct ReadingTable: View {
     /// `onChange` doesn't deal a second, different reading over it.
     @State private var suppressReDeal = false
 
-    /// A card that is up *and* whose scene is active: the holo/motion state.
-    private var live: Bool { !revealed.isEmpty && scenePhase == .active }
+    /// The scene's live state (M8 adds the room gate): the scene is active
+    /// *and* the table is the room on screen. A card in the hidden table is
+    /// not a face-up card — the holo pauses and the sensor stops.
+    private var sceneLive: Bool { !isHidden && scenePhase == .active }
+
+    /// A card that is up *and* whose scene is live: the holo/motion state.
+    private var live: Bool { sceneLive && !revealed.isEmpty }
 
     /// How many dealt cards the table shows — always `spread.count` once the
     /// (automatic) deal has happened; the `min` defends the one frame in
@@ -64,7 +82,8 @@ struct ReadingTable: View {
                 spreadPicker
                 cardArea
                 meaningPanel
-                newReadingButton
+                saveRow
+                bottomRow
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
@@ -119,7 +138,7 @@ struct ReadingTable: View {
                             faceUp: isUp,
                             reduceMotion: reduceMotion,
                             tilt: tilt,
-                            isFaceUp: isUp && scenePhase == .active)
+                            isFaceUp: isUp && sceneLive)
                     .frame(width: f.width, height: f.height)
                     // Generous hit target: the cross's ten can be under the
                     // 44 pt HIG floor at the smallest iPhone, so the tappable
@@ -205,7 +224,64 @@ struct ReadingTable: View {
     static let uprightInk = Color(red: 0.90, green: 0.78, blue: 0.61)
     static let invertedInk = Color(red: 0.72, green: 0.75, blue: 0.85)
 
-    // MARK: Actions
+    // MARK: The save (M8) — the daily journal
+
+    /// The journal is a 3-card ritual: the save row appears only when the
+    /// 3-card spread is dealt **and fully revealed** — the reading complete,
+    /// ready to be the day's entry. (It appears nowhere else: the one-card
+    /// pull and the Celtic cross have no save — and because the row shows
+    /// only for the 3-card, the cross's M7 no-overflow bar is untouched.)
+    private var saveEligible: Bool {
+        spread.id == Spread.threeCards.id && reading != nil && count == 3 && revealed.count == count
+    }
+
+    @ViewBuilder
+    private var saveRow: some View {
+        if saveEligible, let r = reading {
+            Button(action: saveToJournal) {
+                Label(isSaved(r) ? "Saved" : saveLabel(r),
+                      systemImage: isSaved(r) ? "checkmark" : "bookmark")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(isSaved(r) ? .white.opacity(0.55) : .white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 24)
+                    .background(Color.white.opacity(0.08), in: Capsule())
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
+            }
+            .disabled(isSaved(r))
+            .transition(.opacity)
+            .accessibilityLabel(isSaved(r)
+                ? "Saved to the journal"
+                : store.entry(forDay: Date()) == nil
+                    ? "Save this reading to the journal"
+                    : "Replace today's journal entry with this reading")
+        }
+    }
+
+    /// The button's verb, honest about what it does: a day without an entry
+    /// is "Save to journal"; a day that already has one is "Replace
+    /// today's" (a re-save swaps that day's cards — the day's stamp and the
+    /// user's note are kept, by the store's one-per-day rule).
+    private func saveLabel(_ r: Reading) -> String {
+        store.entry(forDay: Date()) == nil ? "Save to journal" : "Replace today's"
+    }
+
+    /// This reading is the day's entry, exactly as drawn (a no-op re-save,
+    /// so the button settles into a quiet "Saved").
+    private func isSaved(_ r: Reading) -> Bool {
+        store.entry(forDay: Date())?.reading == r
+    }
+
+    /// Save the dealt reading as today's entry (M8: "draw three and save
+    /// them as today's entry (date-stamped)"). The store stamps it with
+    /// now; the journal file lands on the device. The free tier's 3-entry
+    /// cap, when M9 brings it, sits above the store — not in it.
+    private func saveToJournal() {
+        guard let r = reading else { return }
+        _ = store.save(r)
+    }
+
+    // MARK: The bottom row (M8: the journal sits beside the re-deal)
 
     private var newReadingButton: some View {
         Button(action: newReading) {
@@ -216,6 +292,39 @@ struct ReadingTable: View {
                 .padding(.horizontal, 24)
                 .background(Color.white.opacity(0.08), in: Capsule())
                 .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
+        }
+    }
+
+    private var bottomRow: some View {
+        HStack(spacing: 12) {
+            Button(action: onOpenJournal) {
+                Label {
+                    Text("Journal")
+                } icon: {
+                    Image(systemName: "book")
+                        .overlay(alignment: .topTrailing) {
+                            if !store.entries.isEmpty {
+                                let n = store.entries.count
+                                Text(n > 9 ? "9+" : "\(n)")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundStyle(.black)
+                                    .padding(3)
+                                    .background(Self.uprightInk, in: Circle())
+                                    .offset(x: 6, y: -6)
+                            }
+                        }
+                }
+                .font(.body.weight(.medium))
+                .foregroundStyle(.white.opacity(0.75))
+                .padding(.vertical, 10)
+                .padding(.horizontal, 20)
+                .background(Color.white.opacity(0.08), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
+            }
+            .accessibilityLabel("Journal")
+            .accessibilityValue("\(store.entries.count) saved day\(store.entries.count == 1 ? "" : "s")")
+
+            newReadingButton
         }
         .padding(.bottom, 6)
     }

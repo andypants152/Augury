@@ -5,12 +5,15 @@ line-art cards** with a **holographic foil finish that shifts as you tilt the de
 
 **One price ($9.99), yours forever. No subscription. No account. No internet.**
 
-> **Status: M7** — the 78-card deck **in the app bundle** (M1–M3), the
-> holographic finish (M4), the deal engine (M5), and the spread-driven
-> reading table (M6–M7): choose one card, three (past/present/future), or
-> the Celtic cross — cards dealt face-down, flipped one at a time to reveal
-> each under the holo, upright or inverted meaning included. The plan lives
-> in [`roadmap.md`](roadmap.md).
+> **Status: M8** — the 78-card deck **in the app bundle** (M1–M3), the
+> holographic finish (M4), the deal engine (M5), the spread-driven
+> reading table (M6–M7): choose one card, three (past/present/future),
+> or the Celtic cross — cards dealt face-down, flipped one at a time to
+> reveal each under the holo, upright or inverted meaning included — and
+> the **daily journal** (M8): save a three-card reading as today's
+> date-stamped entry, browse past days, and reopen any one of them — the
+> cards flip up under the holo again and the day's note is editable. The
+> plan lives in [`roadmap.md`](roadmap.md).
 
 The promise (short form): the deck is **made once, done** — 78 cards authored once and
 committed as static SVGs, never changing. Canonical tarot meaning (upright + inverted).
@@ -44,9 +47,10 @@ Swift 5 language mode).
   - `Models/Spread.swift` — the spreads: 1-card, 3-card, Celtic cross (names + prompts + layout, in deal order)
   - `Assets.xcassets` — the card art: a shared `card-bg` + one line-art layer per card (SVG sources, rasterized by `actool`)
   - `Engine/` — `HoloFinish` + `MotionTilt` (the holo, M4) and `Reading` (M5: the shuffle + deal + fall — the one real random)
-  - `UI/` — the spread-driven reading table (M6–M7): the card components + `SpreadLayout` (fits any spread to the space) + the table itself — one card, three, or the Celtic cross
-  - `AuguryApp.swift` / `ContentView.swift` — the app root (hosts the table)
-- `AuguryTests/` — unit tests
+  - `Store/` — `ReadingStore` (M8: the daily journal — one entry per day, its note, local JSON; uncapped — the free-tier cap is M9's gate above it)
+  - `UI/` — the spread-driven reading table (M6–M7) + the journal (M8: the day list, a day reopened, and the save row): the card components + `SpreadLayout` (fits any spread to the space) + `JournalView`
+  - `AuguryApp.swift` / `ContentView.swift` — the app root (owns the one `ReadingStore`; hosts the table and the journal as two rooms)
+- `AuguryTests/` — unit tests (deck, card art, the deal, the spreads, the journal store)
 - `drafts/` — the 78 canonical line-art SVGs (the committed source of truth; refined in M3) + deck order. `layers/` (gitignored) is the derived two-layer split; `_contact-sheet*.png` are review artifacts
 - `tools/card-draft/` — the design-time pipeline (never shipped): `generate.py` (specs → SVGs + layer split), `montage.swift` (contact-sheet previews), `sync_assets.py` (layers → asset catalog, with validation)
 - `project.yml` — XcodeGen source of truth (the `.xcodeproj` is generated, not committed)
