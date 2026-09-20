@@ -3,17 +3,20 @@
 A tarot / oracle reading app you own. A complete, hand-made deck of **78 celestial
 line-art cards** with a **holographic foil finish that shifts as you tilt the device**.
 
-**One price ($9.99), yours forever. No subscription. No account. No internet.**
+**One price ($0.99), yours forever. No subscription. No account. No internet.**
 
-> **Status: M8** — the 78-card deck **in the app bundle** (M1–M3), the
+> **Status: M9** — the 78-card deck **in the app bundle** (M1–M3), the
 > holographic finish (M4), the deal engine (M5), the spread-driven
 > reading table (M6–M7): choose one card, three (past/present/future),
 > or the Celtic cross — cards dealt face-down, flipped one at a time to
-> reveal each under the holo, upright or inverted meaning included — and
-> the **daily journal** (M8): save a three-card reading as today's
+> reveal each under the holo, upright or inverted meaning included — the
+> **daily journal** (M8): save a three-card reading as today's
 > date-stamped entry, browse past days, and reopen any one of them — the
-> cards flip up under the holo again and the day's note is editable. The
-> plan lives in [`roadmap.md`](roadmap.md).
+> cards flip up under the holo again and the day's note is editable — and
+> **free/paid gating** (M9): one $0.99 non-consumable unlocks everything at
+> once — the full 78, the Celtic cross, and the unlimited journal; the free
+> tier keeps the 22 majors, the 1- and 3-card spreads, and 3 journal days.
+> The plan lives in [`roadmap.md`](roadmap.md).
 
 The promise (short form): the deck is **made once, done** — 78 cards authored once and
 committed as static SVGs, never changing. Canonical tarot meaning (upright + inverted).
@@ -36,7 +39,7 @@ xcodebuild -project Augury.xcodeproj -scheme Augury \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 
-Requires Xcode with the iOS Simulator (built against Xcode 26, iOS 17 deployment target,
+Requires Xcode with the iOS Simulator (built against Xcode 27, iOS 17 deployment target,
 Swift 5 language mode).
 
 ## Layout
@@ -47,10 +50,10 @@ Swift 5 language mode).
   - `Models/Spread.swift` — the spreads: 1-card, 3-card, Celtic cross (names + prompts + layout, in deal order)
   - `Assets.xcassets` — the card art: a shared `card-bg` + one line-art layer per card (SVG sources, rasterized by `actool`)
   - `Engine/` — `HoloFinish` + `MotionTilt` (the holo, M4) and `Reading` (M5: the shuffle + deal + fall — the one real random)
-  - `Store/` — `ReadingStore` (M8: the daily journal — one entry per day, its note, local JSON; uncapped — the free-tier cap is M9's gate above it)
-  - `UI/` — the spread-driven reading table (M6–M7) + the journal (M8: the day list, a day reopened, and the save row): the card components + `SpreadLayout` (fits any spread to the space) + `JournalView`
-  - `AuguryApp.swift` / `ContentView.swift` — the app root (owns the one `ReadingStore`; hosts the table and the journal as two rooms)
-- `AuguryTests/` — unit tests (deck, card art, the deal, the spreads, the journal store)
+  - `Store/` — `ReadingStore` (M8: the daily journal — one entry per day, its note, local JSON; uncapped — the free-tier cap is the M9 entitlement, above it) + `PurchaseManager` (M9: the free/paid `Entitlement` — the single gate: deck, spreads, journal cap)
+  - `UI/` — the spread-driven reading table (M6–M7) + the journal (M8: the day list, a day reopened, and the save row) + the paywall (M9): the card components + `SpreadLayout` (fits any spread to the space) + `JournalView` + `Paywall`
+  - `AuguryApp.swift` / `ContentView.swift` — the app root (owns the one `ReadingStore` + `PurchaseManager`; hosts the table and the journal as two rooms)
+- `AuguryTests/` — unit tests (deck, card art, the deal, the spreads, the journal store, the purchase)
 - `drafts/` — the 78 canonical line-art SVGs (the committed source of truth; refined in M3) + deck order. `layers/` (gitignored) is the derived two-layer split; `_contact-sheet*.png` are review artifacts
 - `tools/card-draft/` — the design-time pipeline (never shipped): `generate.py` (specs → SVGs + layer split), `montage.swift` (contact-sheet previews), `sync_assets.py` (layers → asset catalog, with validation)
 - `project.yml` — XcodeGen source of truth (the `.xcodeproj` is generated, not committed)
@@ -65,4 +68,4 @@ Swift 5 language mode).
   handling a physical card. Calm, dark, quiet.
 - **Offline, no account.** No network beyond StoreKit. The deck ships in the bundle;
   your daily journal lives on the device.
-- **Pay once.** $9.99 non-consumable, one honest unlock.
+- **Pay once.** $0.99 non-consumable, one honest unlock.

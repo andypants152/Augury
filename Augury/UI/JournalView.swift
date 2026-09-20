@@ -17,6 +17,9 @@ import SwiftUI
 /// `ReadingStore` the table and the journal share.
 struct JournalView: View {
     @EnvironmentObject private var store: ReadingStore
+    /// The one unlock (M9): the journal presents what the tier keeps —
+    /// the most recent 3 days free, all of them full.
+    @EnvironmentObject private var purchase: PurchaseManager
 
     /// Back to the table (the root's route change).
     var onBack: () -> Void = {}
@@ -26,6 +29,10 @@ struct JournalView: View {
     /// forth instead of resetting.
     @State private var selected: JournalEntry.ID?
     @State private var lastSelected: JournalEntry.ID?
+
+    /// The paywall (M9) — presented when a free user at the 3-day cap taps
+    /// the unlock row.
+    @State private var showingPaywall = false
 
     /// The rows' mini-cards borrow a motion source that is **never started**:
     /// an archive row is not a face-up card, so the holo sits paused (no
@@ -57,11 +64,31 @@ struct JournalView: View {
             }
         }
         .animation(.easeInOut(duration: 0.22), value: selected)
+        .fullScreenCover(isPresented: $showingPaywall) {
+            Paywall(purchase: purchase) { showingPaywall = false }
+        }
         #if DEBUG
         // onChange, not onAppear: this room appears *before* the root seeds
         // the journal, so the hook keys off the store's first publish.
         .onChange(of: store.entries.count) { _, _ in applyDebugHook() }
         #endif
+    }
+
+    // MARK: Gate 3 (M9), applied
+
+    /// What the tier presents from the journal: the most recent 3 days free,
+    /// all of them full. The store stays uncapped (append-only, M8) — this
+    /// is the cap the user experiences, applied above it.
+    private var visible: [JournalEntry] {
+        purchase.entitlement.visibleEntries(store.entries)
+    }
+
+    /// A free user at the cap: the list's quiet upsell. (Full never shows
+    /// it — the cap is `nil` there; and below the cap the journal is as
+    /// quiet as it has always been.)
+    private var atCap: Bool {
+        guard !purchase.entitlement.isFull, let cap = purchase.entitlement.journalCap else { return false }
+        return store.entries.count >= cap
     }
 
     // MARK: Verification hook
@@ -84,12 +111,15 @@ struct JournalView: View {
             Color.black.ignoresSafeArea()
             VStack(spacing: 16) {
                 header
-                if store.entries.isEmpty {
+                if visible.isEmpty {
                     emptyState
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 10) {
-                            ForEach(store.entries.reversed()) { entry in
+                            if atCap {
+                                unlockRow
+                            }
+                            ForEach(visible.reversed()) { entry in
                                 row(entry)
                             }
                         }
@@ -147,6 +177,31 @@ struct JournalView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 30)
+    }
+
+    /// The free tier at its cap: the journal's quiet upsell (M9) — the
+    /// 3-day limit, and the one purchase past it. A full user never sees
+    /// it; a free user below the cap never sees it either.
+    private var unlockRow: some View {
+        Button(action: { showingPaywall = true }) {
+            HStack(spacing: 8) {
+                Image(systemName: "lock")
+                    .font(.footnote.weight(.semibold))
+                Text("The free journal keeps 3 days — unlock unlimited")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+            .foregroundStyle(ReadingTable.uprightInk.opacity(0.9))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ReadingTable.uprightInk.opacity(0.2)))
+        }
+        .accessibilityLabel("The free journal keeps three days. Unlock unlimited journal, one time.")
     }
 
     /// One day: its stamp, its three cards, its note sliver.

@@ -16,9 +16,9 @@ An iOS **SwiftUI tarot / oracle reading app you own**:
 - **A daily journal** (M8): a three-card reading saved as today's date-stamped
   entry; past days reopen — cards, meanings, note — append-only, local JSON.
   The app's only growing state.
-- One price ($9.99), yours forever. Fully offline, no account, no backend.
+- One price ($0.99), yours forever. Fully offline, no account, no backend.
 
-**Current status: M8 complete.** M3 committed the rework of all 78 (the `Arcana`
+**Current status: M9 complete.** M3 committed the rework of all 78 (the `Arcana`
 model, the draft pipeline, and the full deck in the app bundle — two-layer SVGs,
 `actool`-rasterized, ~8 MB — render-verified). M4 adds the holographic finish, the
 one live layer: `Engine/HoloFinish.metal` (foil on the line layer only — gold frame,
@@ -39,11 +39,20 @@ and the cross's ten face-down fit the smallest iPhone (pinned in
 `AuguryTests/SpreadTests.swift`). M8 adds the **daily journal**:
 `Store/ReadingStore.swift` (one entry per day — a same-day re-save updates in
 place, keeping the day's stamp and the user's note; append-only, local JSON,
-uncapped — the free-tier cap is M9's gate above it) + `UI/JournalView.swift`
+uncapped — the free-tier cap is the M9 entitlement, above it) + `UI/JournalView.swift`
 (the day list, newest first; a day reopened flips its three up under the holo
-with an editable note). The root (`ContentView`) owns the one store and swaps
-the two rooms — table / journal — by opacity, so a trip to the journal never
-loses the table's deal, and a hidden table pauses the holo (no idle draw).
+with an editable note). M9 adds **free/paid gating**:
+`Store/PurchaseManager.swift` (`Entitlement` — free / full — is the single
+value the app consults at three points: which deck the engine shuffles from,
+which spreads the picker offers, and how many journal entries the journal
+presents; the store stays uncapped below it) + `UI/Paywall.swift` (the
+one-time unlock, $0.99 — the price stated plainly) — one non-consumable lifts
+everything at once; the purchase *result* is never the grant,
+`currentEntitlements` is, and a verify never downgrades.
+The root (`ContentView`) owns the one store and the one `PurchaseManager`,
+and swaps the two rooms — table / journal — by opacity, so a trip to the
+journal never loses the table's deal, and a hidden table pauses the holo (no
+idle draw).
 `roadmap.md` ("Where we are") is the canonical plan.
 
 ## Repo layout
@@ -61,8 +70,9 @@ Augury/
 │   │   ├── card-back.imageset  the card back
 │   │   └── <name>.imageset/    78 line-art layers, one per card (SVG source + Contents.json)
 │   ├── AuguryApp.swift     @main entry
-│   ├── ContentView.swift   root: owns the one `ReadingStore`; hosts the two
-│   │                       rooms (the table / the journal), opacity-swapped
+│   ├── ContentView.swift   root: owns the one `ReadingStore` +
+│   │                       `PurchaseManager`; hosts the two rooms (the table /
+│   │                       the journal), opacity-swapped
 │   ├── Models/
 │   │   ├── Arcana.swift        Suit / ArcanaID (78 cases) / Arcana types + assetName mapping
 │   │   ├── ArcanaCatalog.swift the 78 cards: names, keywords, upright + inverted meanings
@@ -75,10 +85,14 @@ Augury/
 │       └── Reading.swift     M5 deal: Orientation / DrawnCard / Reading / SeededRNG /
 │                             ReadingEngine — the one real "random" in the app
 │   ├── Store/
-│   │   └── ReadingStore.swift M8 journal: `JournalEntry` / `ReadingStore` — one per
-│   │                         day (upsert, stamp + note preserved), local JSON,
-│   │                         atomic writes, corrupt-file quarantine, uncapped (M9's
-│   │                         free-tier cap sits above it)
+│   │   ├── ReadingStore.swift M8 journal: `JournalEntry` / `ReadingStore` — one per
+│   │   │                       day (upsert, stamp + note preserved), local JSON,
+│   │   │                       atomic writes, corrupt-file quarantine, uncapped (the
+│   │   │                       free-tier cap is the M9 entitlement, above it)
+│   │   └── PurchaseManager.swift M9: `Entitlement` (free/full — the single gate:
+│   │       the deck, the spreads, the journal cap) + `PurchaseManager` (StoreKit 2
+│   │       behind a `StoreKitClient` seam; the purchase result is never the grant —
+│   │       `currentEntitlements` is, and a verify never downgrades)
 │   └── UI/
 │       ├── Card.swift        RevealCard / FlipCard / CardFace / CardBack — the card
 │       │                     components (overlay-composited, holo on the art layer)
@@ -86,10 +100,15 @@ Augury/
 │       │                       scale-to-fit + center (the cross's 90° crossing card included)
 │       ├── ReadingTable.swift M6/M7 table: spread picker, dealt face-down, tap to flip +
 │       │                       reveal under the holo, meaning panel, new reading, the M8
-│       │                       save row + journal button
-│       └── JournalView.swift  M8 journal: the day list (newest first) + a day reopened —
-│                              cards flip up under the holo, note field; rows use a
-│                              motion source that is never started
+│       │                       save row + journal button; M9: the deal + picker follow
+│       │                       the entitlement, the save row knows the cap
+│       ├── JournalView.swift  M8 journal: the day list (newest first) + a day reopened —
+│       │                       cards flip up under the holo, note field; rows use a
+│       │                       motion source that is never started; M9 presents the
+│       │                       tier-visible entries (3 or all) + the one unlock row
+│       └── Paywall.swift M9: the full-screen paywall — the one-time price stated
+│                             plainly (store `displayPrice`, or the documented $0.99
+│                             until it loads) + the three unlocks + restore
 ├── AuguryTests/
 │   ├── ArcanaTests.swift     78/78 cards, non-empty fields, 156 meanings, 22/56 split, 14/suit
 │   ├── CardArtTests.swift    regression: assetName ↔ draft filename mapping
@@ -97,9 +116,14 @@ Augury/
 │   │                         falls), seed replay, full-deck permutation
 │   ├── SpreadTests.swift     M7: spread catalog, canonical cross order, distinct deals,
 │   │                         no overflow on the smallest iPhone, only-the-crossing overlap
-│   └── ReadingStoreTests.swift M8: one-per-day upsert (stamp + note preserved),
-│                             kill+relaunch identity, note mutation, corrupt-file
-│                             quarantine, uncapped
+│   ├── ReadingStoreTests.swift M8: one-per-day upsert (stamp + note preserved),
+│   │                             kill+relaunch identity, note mutation, corrupt-file
+│   │                             quarantine, uncapped
+│   └── PurchaseManagerTests.swift M9: the entitlement's three gates (free = majors,
+│                                     2 spreads, cap 3; full lifts all) + the manager
+│                                     through a fake `StoreKitClient` (one purchase
+│                                     lifts everything; verify never downgrades;
+│                                     price fallback)
 ├── drafts/                 ← the source of truth for the ART (committed)
 │   ├── _order.txt              deck order (22 majors, then wands/cups/swords/pentacles)
 │   ├── card-back.svg
@@ -116,7 +140,7 @@ Augury/
 
 ## Build & test
 
-No SPM dependencies — pure SwiftUI + Metal + CoreMotion. Xcode 26, iOS 17.0 deployment
+No SPM dependencies — pure SwiftUI + Metal + CoreMotion. Xcode 27, iOS 17.0 deployment
 target, Swift 5 language mode, portrait-only iPhone, bundle id `xyz.andypants.augury`.
 
 ```sh
@@ -229,6 +253,19 @@ These are the things that silently break or violate the product's promises.
   motion source is never started — the live holo belongs to the day's
   detail, where the cards are face-up); a hidden table pauses the holo the
   same way (no idle draw).
+- **The gate is one value, consulted at three points** (M9): `Entitlement`
+  (free / full) is the whole of the free/paid difference — its `deck` (22
+  majors or 78), its `spreads` (two or three), its `journalCap` (3 or
+  `nil` = unlimited). Route all free/paid behavior through it; do not add
+  per-feature tier checks. The deal flows through the M5 engine **with
+  `entitlement.deck`** — never filter the full deck in the UI. The journal cap
+  is applied *above* the store (`ReadingStore` stays uncapped — M8), and a
+  *same-day* re-save is never blocked (the one-per-day rule means the cap
+  never strands a day — only the *next* day prompts for the unlock). The
+  purchase *result* is never the grant: the UI believes
+  `currentEntitlements`, and a non-consumable verify never downgrades.
+  `-auguryTier full|free` (a debug launch arg, handled at the root) stands in
+  for the purchase until M10's `.storekit` lands.
 - **Style constants** (in `generate.py`): 540×960 canvas (9:16); background
   `#141b3f → #090e24`; starlight lines `#dfe7ff`; gold frame `#e6c79c`; stroke widths
   3.4 / 2.4 / 1.5. Seventy-eight cards that don't look like *one* deck reads as a
@@ -251,19 +288,21 @@ These are the things that silently break or violate the product's promises.
 | M6 | Table → draw → flip → reveal | ✅ done — `UI/ReadingTable.swift`: 3 cards dealt face-down on launch, tap to flip under the holo, meaning panel, one shared `MotionTilt` gated on *any* face-up; 1 tap to first reveal; the M4 shell's card components moved to `UI/Card.swift` |
 | M7 | All spreads (1-card, 3-card, Celtic cross) | ✅ done — `Models/Spread.swift` + `UI/SpreadLayout.swift`: picker-driven table; the cross's ten face-down fit the smallest iPhone (unit-pinned + screenshot-verified); all three ungated until M9's content gating |
 | M8 | Daily journal | ✅ done — `Store/ReadingStore.swift` + `UI/JournalView.swift`: one-per-day upsert (stamp + note preserved), kill+relaunch identity, local JSON, uncapped (M9's cap is above it); the root owns the store and swaps the two rooms by opacity; save row + journal button in the table |
-| M9 | Free/paid gating | planned |
-| M10 | StoreKit 2 | planned → `Store/PurchaseManager.swift` |
+| M9 | Free/paid gating | ✅ done — `Store/PurchaseManager.swift` (`Entitlement`: the single gate — the deck, the spreads, the journal cap) + `UI/Paywall.swift` (the one-time $0.99, stated plainly): the table's deal + picker follow the entitlement, the save row + journal know the cap (above the uncapped store), one purchase lifts all three; 20 new tests |
+| M10 | The one unlock, end to end | planned → the `.storekit` config (`augury.unlock` at $0.99) + the 4/4 simulator pass + real-device sandbox (the manager + entitlement are in from M9) |
 | M11–12 | Polish + App Store ship | planned |
 
-Files named in the roadmap but **not yet in the tree**:
-`Store/PurchaseManager.swift`, `UI/Paywall.swift`. Don't be confused about
-the app today: `ContentView` owns the one `ReadingStore` and hosts two rooms
-— the table (`UI/ReadingTable`, M6, M7-spread-driven: the chosen spread dealt
+Don't be confused about the app today: `ContentView` owns the one
+`ReadingStore` and the one `PurchaseManager`, and hosts two rooms — the
+table (`UI/ReadingTable`, M6, M7-spread-driven: the chosen spread dealt
 face-down, flipped one at a time, each revealed under the holo with its
 meaning; the layout is spec-driven through `UI/SpreadLayout`, never hard-coded
-sizes; M8 adds the save row + the journal button) and the journal
-(`UI/JournalView`, M8: the day list, a day reopened). `UI/Card.swift` holds
-the card components both rooms reuse.
+sizes; M8 adds the save row + the journal button; M9 makes the deal + picker
+follow the entitlement) and the journal (`UI/JournalView`, M8: the day list,
+a day reopened; M9 presents the tier-visible entries + the one unlock row).
+`UI/Card.swift` holds the card components both rooms reuse. The one planned
+piece still missing from the tree: the `.storekit` configuration (M10 — the
+`augury.unlock` product at $0.99).
 
 ## Git & hygiene
 

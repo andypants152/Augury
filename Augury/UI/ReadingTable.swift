@@ -25,6 +25,10 @@ struct ReadingTable: View {
     @Environment(\.scenePhase) private var scenePhase
     /// The journal (M8): the app's store, shared from the root.
     @EnvironmentObject private var store: ReadingStore
+    /// The one unlock (M9): the entitlement this table reads — which deck
+    /// the engine shuffles from, which spreads the picker offers, and the
+    /// journal's cap.
+    @EnvironmentObject private var purchase: PurchaseManager
 
     /// The journal room (M8) — where "Journal" goes, and whether this table
     /// is hidden behind it (which un-lives the holo: a hidden card is not a
@@ -41,7 +45,9 @@ struct ReadingTable: View {
     /// any card is revealed, stops when none are — ten cards, one sensor.
     @StateObject private var tilt = MotionTilt()
 
-    private let deck = Arcana.all
+    /// Gate 1 (M9): the deck the engine shuffles from — the 22 majors free,
+    /// the 78 full. (Was `Arcana.all`; the entitlement owns it now.)
+    private var deck: [Arcana] { purchase.entitlement.deck }
 
     /// The chosen spread — M7's generalization of M6's hard-coded three.
     /// Defaults to the M6 spread, so a cold launch is the same ritual it was.
@@ -57,10 +63,15 @@ struct ReadingTable: View {
     /// `onChange` doesn't deal a second, different reading over it.
     @State private var suppressReDeal = false
 
-    /// The scene's live state (M8 adds the room gate): the scene is active
-    /// *and* the table is the room on screen. A card in the hidden table is
-    /// not a face-up card — the holo pauses and the sensor stops.
-    private var sceneLive: Bool { !isHidden && scenePhase == .active }
+    /// The paywall (M9) — presented when a free user meets a gate: the
+    /// unlock affordance, or the journal's 3-day cap on save.
+    @State private var showingPaywall = false
+
+    /// The scene's live state (M8 adds the room gate, M9 adds the paywall
+    /// gate): the scene is active, the table is the room on screen, and the
+    /// paywall is not covering it. A card behind a modal is not a face-up
+    /// card — the holo pauses and the sensor stops.
+    private var sceneLive: Bool { !isHidden && !showingPaywall && scenePhase == .active }
 
     /// A card that is up *and* whose scene is live: the holo/motion state.
     private var live: Bool { sceneLive && !revealed.isEmpty }
@@ -74,11 +85,7 @@ struct ReadingTable: View {
         ZStack {
             Color.black.ignoresSafeArea()
             VStack(spacing: 16) {
-                Text(spread.name)
-                    .font(.title2.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .padding(.top, 4)
-
+                header
                 spreadPicker
                 cardArea
                 meaningPanel
@@ -101,14 +108,53 @@ struct ReadingTable: View {
         .onChange(of: live) { _, isLive in
             tilt.setFaceUp(isLive)
         }
+        // M9: the entitlement changed (a purchase, or the debug tier hook).
+        // If the spread on the table is no longer one the tier offers (a
+        // full → free debug flip on the cross), fall back to the M6 spread
+        // and re-deal — the gate must hold even in the middle of a ritual.
+        .onChange(of: purchase.entitlement) { _, entitlement in
+            if !entitlement.spreads.contains(spread) {
+                withAnimation(flip) {
+                    spread = Spread.threeCards
+                    deal()
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showingPaywall) {
+            Paywall(purchase: purchase) { showingPaywall = false }
+        }
         .accessibilityElement(children: .contain)
     }
 
-    // MARK: The spread picker
+    // MARK: The header (M9 adds the unlock affordance, free tier only)
+
+    private var header: some View {
+        HStack {
+            Text(spread.name)
+                .font(.title2.weight(.medium))
+                .foregroundStyle(.white.opacity(0.7))
+            Spacer()
+            if !purchase.entitlement.isFull {
+                Button(action: { showingPaywall = true }) {
+                    Label("Unlock", systemImage: "lock")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Self.uprightInk.opacity(0.9))
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.06), in: Capsule())
+                        .overlay(Capsule().strokeBorder(Self.uprightInk.opacity(0.25)))
+                }
+                .accessibilityLabel("Unlock the full deck, the Celtic cross, and unlimited journal, one time")
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    // MARK: The spread picker (M9: offers what the tier has)
 
     private var spreadPicker: some View {
         Picker("Spread", selection: $spread) {
-            ForEach(Spread.all) { s in
+            ForEach(purchase.entitlement.spreads) { s in
                 Text(s.name).tag(s)
             }
         }
@@ -225,6 +271,13 @@ struct ReadingTable: View {
     static let uprightInk = Color(red: 0.90, green: 0.78, blue: 0.61)
     static let invertedInk = Color(red: 0.72, green: 0.75, blue: 0.85)
 
+    /// Gate 3 (M9), applied: what the tier presents from the journal —
+    /// the most recent 3 days free, all of them full. (The store stays
+    /// uncapped; the cap lives above it.)
+    private var visibleEntries: [JournalEntry] {
+        purchase.entitlement.visibleEntries(store.entries)
+    }
+
     // MARK: The save (M8) — the daily journal
 
     /// The journal is a 3-card ritual: the save row appears only when the
@@ -236,26 +289,40 @@ struct ReadingTable: View {
         spread.id == Spread.threeCards.id && reading != nil && count == 3 && revealed.count == count
     }
 
+    /// Gate 3 (M9): the free journal keeps 3 days. A day that is already
+    /// journaled is a same-day replace (always allowed); a *new* day past
+    /// the cap is not — the button's verb says so, and its tap opens the
+    /// paywall. The store itself is uncapped (M8) — the cap lives here.
+    private var saveBlockedByCap: Bool {
+        guard saveEligible else { return false }
+        return !purchase.entitlement.canSaveDay(hasEntryToday: store.entry(forDay: Date()) != nil,
+                                                currentCount: store.entries.count)
+    }
+
     @ViewBuilder
     private var saveRow: some View {
         if saveEligible, let r = reading {
             Button(action: saveToJournal) {
-                Label(isSaved(r) ? "Saved" : saveLabel(r),
-                      systemImage: isSaved(r) ? "checkmark" : "bookmark")
+                Label(saveBlockedByCap ? "3 free days — unlock"
+                                       : isSaved(r) ? "Saved" : saveLabel(r),
+                      systemImage: saveBlockedByCap ? "lock"
+                                                    : isSaved(r) ? "checkmark" : "bookmark")
                     .font(.body.weight(.medium))
-                    .foregroundStyle(isSaved(r) ? .white.opacity(0.55) : .white)
+                    .foregroundStyle(isSaved(r) && !saveBlockedByCap ? .white.opacity(0.55) : .white)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 24)
                     .background(Color.white.opacity(0.08), in: Capsule())
                     .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
             }
-            .disabled(isSaved(r))
+            .disabled(isSaved(r) && !saveBlockedByCap)
             .transition(.opacity)
-            .accessibilityLabel(isSaved(r)
-                ? "Saved to the journal"
-                : store.entry(forDay: Date()) == nil
-                    ? "Save this reading to the journal"
-                    : "Replace today's journal entry with this reading")
+            .accessibilityLabel(saveBlockedByCap
+                ? "The free journal keeps three days. Unlock to save more."
+                : isSaved(r)
+                    ? "Saved to the journal"
+                    : store.entry(forDay: Date()) == nil
+                        ? "Save this reading to the journal"
+                        : "Replace today's journal entry with this reading")
         }
     }
 
@@ -274,11 +341,16 @@ struct ReadingTable: View {
     }
 
     /// Save the dealt reading as today's entry (M8: "draw three and save
-    /// them as today's entry (date-stamped)"). The store stamps it with
-    /// now; the journal file lands on the device. The free tier's 3-entry
-    /// cap, when M9 brings it, sits above the store — not in it.
+    /// them as today's entry (date-stamped)"). Gate 3 (M9): a free user at
+    /// the 3-day cap is shown the paywall instead — the cap is the
+    /// paywall's moment. The store itself is uncapped; the cap lives here.
     private func saveToJournal() {
         guard let r = reading else { return }
+        if !purchase.entitlement.canSaveDay(hasEntryToday: store.entry(forDay: Date()) != nil,
+                                            currentCount: store.entries.count) {
+            showingPaywall = true
+            return
+        }
         _ = store.save(r)
     }
 
@@ -304,8 +376,10 @@ struct ReadingTable: View {
                 } icon: {
                     Image(systemName: "book")
                         .overlay(alignment: .topTrailing) {
-                            if !store.entries.isEmpty {
-                                let n = store.entries.count
+                            // M9: the badge counts what the tier presents
+                            // (≤ 3 free, all full) — not the raw store.
+                            if !visibleEntries.isEmpty {
+                                let n = visibleEntries.count
                                 Text(n > 9 ? "9+" : "\(n)")
                                     .font(.system(size: 8, weight: .bold))
                                     .foregroundStyle(.black)
@@ -323,7 +397,7 @@ struct ReadingTable: View {
                 .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
             }
             .accessibilityLabel("Journal")
-            .accessibilityValue("\(store.entries.count) saved day\(store.entries.count == 1 ? "" : "s")")
+            .accessibilityValue("\(visibleEntries.count) saved day\(visibleEntries.count == 1 ? "" : "s")")
 
             newReadingButton
         }
@@ -354,8 +428,9 @@ struct ReadingTable: View {
         // A fresh engine per deal (M5): the platform CSPRNG, one shuffle.
         // Not stored — a fresh CSPRNG is just as random, and keeping it local
         // keeps `deal()` non-mutating (it only touches `@State`), so it works
-        // from `onAppear`, the picker, and the button alike. The free-tier
-        // deck swap (M9) belongs in this one line.
+        // from `onAppear`, the picker, and the button alike. The deck is the
+        // entitlement's (M9): the 22 majors free, the 78 full — the free/paid
+        // difference is this one line, read from the single gate.
         var engine = ReadingEngine()
         reading = engine.deal(count: spread.count, from: deck)
         revealed = []
@@ -371,27 +446,32 @@ struct ReadingTable: View {
     // MARK: Verification hook
 
     #if DEBUG
-    /// Launch arguments for screenshot passes (the M6 hook, M7-extended):
-    ///   `-augurySpread <id>`  — deal that spread: `one-card`, `three-card`,
-    ///                           or `celtic-cross` (matches the picker)
+    /// Launch arguments for screenshot passes (the M6 hook, M7- and
+    /// M9-extended):
+    ///   `-augurySpread <id>`  — deal that spread (one the tier offers):
+    ///                           `one-card`, `three-card`, or `celtic-cross`
     ///   `-auguryCard <slug>`  — force the first position to a known arcana
     ///                           (its assetName), so a worst-case card can be
     ///                           pinned, e.g. `-auguryCard the-high-priestess`
     ///   `-auguryRevealed`     — reveal every position (holo + meaning panel)
     ///   `-auguryInverted`     — force every card to fall inverted
+    ///   `-auguryPaywall`      — open the paywall (the M9 screenshot pass)
     /// Value flags accept either `-flag value` or `-flag=value`.
     private func applyDebugHook() {
         if let raw = launchArg("-augurySpread"),
-           let s = Spread.all.first(where: { $0.id == raw.lowercased().replacingOccurrences(of: " ", with: "-") || $0.name.lowercased() == raw.lowercased() }),
+           let s = purchase.entitlement.spreads.first(where: { $0.id == raw.lowercased().replacingOccurrences(of: " ", with: "-") || $0.name.lowercased() == raw.lowercased() }),
            s.id != spread.id {
             suppressReDeal = true    // the picker's onChange would deal a second time
             spread = s
             deal()
         }
         if let slug = launchArg("-auguryCard"), let r = reading {
-            if let idx = deck.firstIndex(where: { $0.assetName == slug }) {
+            // The full catalog, deliberately: this is the *art* verification
+            // hook (M3), not a tier-respecting one — a forced card may be a
+            // minor even in the free tier, so it is matched against all 78.
+            if let idx = Arcana.all.firstIndex(where: { $0.assetName == slug }) {
                 var draws = r.draws
-                draws[0] = DrawnCard(card: deck[idx], orientation: .upright)
+                draws[0] = DrawnCard(card: Arcana.all[idx], orientation: .upright)
                 reading = Reading(draws: draws)
             }
         }
@@ -401,6 +481,9 @@ struct ReadingTable: View {
         if CommandLine.arguments.contains("-auguryRevealed") {
             revealed = Set(0..<spread.count)
             focus = 0
+        }
+        if CommandLine.arguments.contains("-auguryPaywall") {
+            showingPaywall = true
         }
     }
 

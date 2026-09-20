@@ -2,7 +2,7 @@
 
 Augury is a **tarot / oracle reading app you own**. A complete, hand-made deck of 78
 cards, each a **celestial line-art** piece with a **holographic foil finish that shifts
-as you tilt the device**. **One price ($9.99), yours forever. No subscription. No
+as you tilt the device**. **One price ($0.99), yours forever. No subscription. No
 account. No internet.**
 
 ## Design decision: a fixed deck, made once — not runtime generation
@@ -57,7 +57,7 @@ Final pick is yours to confirm with an App Store search.
 5. **Respect the device.** The live holo runs **only while a card is face-up**, and pauses
    otherwise — no idle battery drain. Honors **Reduce Motion** (freezes the holo to a fixed
    angle) for vestibular safety.
-6. **Pay once.** $9.99 non-consumable, one honest unlock.
+6. **Pay once.** $0.99 non-consumable, one honest unlock.
 
 ---
 
@@ -68,7 +68,7 @@ you flip each card; it reveals its celestial line art **with a holo sheen that s
 you tilt** → meaning (upright or inverted) is shown → optionally save the reading to
 your **daily journal** (one 3-card entry per day).
 
-| | Free | $9.99 unlock (one-time) |
+| | Free | $0.99 unlock (one-time) |
 |---|---|---|
 | Cards | 22 Major Arcana (a complete, real subset) | full 78 |
 | Spreads | 1-card, 3-card (past/present/future) | + Celtic cross (10-card) |
@@ -234,17 +234,50 @@ rests). The card back never rotates (a fall is a property of the face; the
 backs stay uniform), and the rotation is applied *outside* the holo so its
 zones (gold frame, silver nameplate, rainbow subject) keep their foil.
 
-**Next: M9 — free/paid gating**: free = 22 majors + the 1- and 3-card spreads
-+ 3 journal entries; paid = the full 78 + the Celtic cross + unlimited
-journal. One $9.99 non-consumable unlocks everything at once (the deck is the
-content layer — `ArcanaCatalog` is already the 22/56 split), so the gate is a
-single entitlement consulted at three points: which cards the engine shuffles
-from, which spreads the picker offers, and how many journal entries the store
-keeps (the cap lives *above* the store — M8's is uncapped). `PurchaseManager`
-(`Store/PurchaseManager.swift`) fetches the product, gates the UI to the
-tier, and `UI/Paywall.swift` states the one-time price plainly; a fresh
-free build must deal only majors, offer two spreads, and stop the journal at
-3 (tests), with one purchase lifting all three.
+**M9 is done — free/paid gating: one purchase, one entitlement, three gates.**
+`Store/PurchaseManager.swift` + `UI/Paywall.swift`. `Entitlement` (free / full)
+is the *single value* the app consults, and the whole of the free/paid
+difference: its `deck` (the 22 majors, or the full 78 — the catalog was
+already the 22/56 split), its `spreads` (the one-card + three-card, or + the
+Celtic cross), and its `journalCap` (3, or `nil` = unlimited — a ceiling, not
+a floor). One purchase lifts all three at once, by construction. The
+`PurchaseManager` (a `@MainActor` object owned by the root, like the store)
+loads the product on launch (for the paywall's price) and re-verifies the
+entitlement; **the purchase *result* is never the grant** — the entitlement is
+what the UI believes, a non-consumable is permanent, so a verify never
+*downgrades* (a store hiccup must not re-lock a paid deck). Behind a
+`StoreKitClient` seam, the logic is testable without the framework.
+In the UI, the three gates: the table deals through the M5 engine **from
+`entitlement.deck`** (a fresh free install deals majors only — the free 22 are
+a complete, real deck) and its picker offers `entitlement.spreads`; the
+save row reads **"3 free days — unlock"** once the journal sits at the cap (a
+*same-day* re-save is never blocked — the one-per-day rule means the cap never
+strands a day, only the *next* one); and the journal presents
+`visibleEntries` — the three most recent, or all — with the same one unlock row
+beneath. The store is untouched: the cap is *above* it, M8's invariant holds.
+Roadmap bar met: a fresh free build deals only majors (100-deal unit), offers
+two spreads, and stops the journal at 3; one purchase lifts all three (unit);
+the paywall states the one-time price plainly. 20 new tests, 71/71 green.
+**Re-priced to $0.99** (was $9.99) at the owner's call; the number lives in
+exactly one constant (`PurchaseManager.intendedPrice`), pinned by a test.
+Verified on the 17e across eight states: free table (two picker segments, the
+unlock button, every revealed card a major), full table (three segments incl.
+the cross, no button), the paywall ($0.99, one time, no subscription), the
+free journal (3 of 5 seeded days + the unlock row), the full journal (all 5, no
+upsell), and the save row at the cap. Until M10's `.storekit` lands, the
+simulator has no product — the paywall states the documented intent, and a
+debug launch arg (`-auguryTier full|free`) stands in for the purchase so both
+tiers are exercisable.
+
+**Next: M10 — StoreKit 2, end to end**: the one unlock against a *real* store.
+The manager and the entitlement are in (M9); M10 adds the `.storekit`
+configuration (the `augury.unlock` non-consumable, $0.99, development +
+production) and takes the 4/4 bar for real: product fetches; purchase ⇒ full
+78 + all spreads + unlimited journal; kill + relaunch persists via
+`currentEntitlements`; fresh install + Restore re-grants — then a real-device
+sandbox purchase (the only live-untested surface, per the sharp edges). The
+`-auguryTier` debug hook retires with it (or stays as an M11 test aid — the
+owner's call).
 
 ---
 
@@ -317,7 +350,7 @@ reading product.
 |---|---|---|
 | **M8** | **Daily journal** — `ReadingStore`: draw three cards, save as today's entry (date-stamped); list / reopen past entries (+ optional note) | Drawing three and saving them to the daily journal lands an entry dated to the day; a saved entry survives kill + relaunch and reopens identically (cards, orientations, date, note); append-only (test); the free cap of 3 is M9's gate — M8's store is uncapped (there is no free/paid state yet to consult) |
 | **M9** | Free/paid gating — free = 22 majors + 2 spreads + 3 daily-journal entries; paid = 78 + all + unlimited | Free build deals only majors and enforces the daily-journal cap (tests); one purchase lifts everything; paywall states the one-time price plainly |
-| **M10** | StoreKit 2 — fetch/purchase/restore + entitlement + `.storekit` + DEBUG toggle | Simulator **4/4**: product fetches; purchase ⇒ full 78 + all spreads + unlimited journal; kill + relaunch persists via `currentEntitlements`; fresh install + Restore re-grants |
+| **M10** | The one unlock, end to end — `.storekit` (`augury.unlock`, $0.99) + 4/4 simulator + real-device sandbox (fetch/purchase/restore + entitlement are in from M9) | Simulator **4/4**: product fetches; purchase ⇒ full 78 + all spreads + unlimited journal; kill + relaunch persists via `currentEntitlements`; fresh install + Restore re-grants |
 
 ### Phase 4 — Ship
 
@@ -359,7 +392,7 @@ No backend, so no dashboards. The signals that matter:
   draws three and logs them day after day is a person who's stuck. Watch this one.
 - **The holo moment** — is it shared? The tilt-to-shimmer is the most screenshot-able part
   of the app; if people film/share it, that's your free marketing engine.
-- **Conversion** — free → $9.99; plus refund rate and rating from the App Store.
+- **Conversion** — free → $0.99; plus refund rate and rating from the App Store.
 
 If people try a couple of readings and don't return, the *meanings* or the *ritual feel*
 is the problem — fix the text and the pacing before anything else.
