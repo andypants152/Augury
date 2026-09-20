@@ -269,6 +269,21 @@ simulator has no product — the paywall states the documented intent, and a
 debug launch arg (`-auguryTier full|free`) stands in for the purchase so both
 tiers are exercisable.
 
+**Bonus (1.0, unnumbered) — Siri + the on-device reflection.** The owner's
+1.0 extra, landed between M9 and M10: two **App Intents**
+(`Intents/AuguryIntents.swift` — "start a tarot reading", "open the tarot
+journal") that open the app and route through `Engine/SiriNavigation` (a
+pending default for the cold launch, a notification for the running app);
+and a **private, on-device reflection** (`Engine/ReadingInterpreter` +
+`UI/ReadingReflectionView`) — Foundation Models (Apple Intelligence,
+iOS 26+), a fresh stateless session on a *completed* spread, in a sheet that
+pauses the holo like any modal. The model only *comments* on the deal — it
+never chooses cards, falls, or meanings (the M5 rule holds: the deal is the
+only randomness). The "Reading" button appears on a complete spread; a Siri
+re-deal and "New reading" reset it. Building the reflection needs Xcode 26+;
+the app's floor stays iOS 17 (pre-26 devices get an honest unavailable
+state). 3 tests; the tree is green.
+
 **Next: M10 — StoreKit 2, end to end**: the one unlock against a *real* store.
 The manager and the entitlement are in (M9); M10 adds the `.storekit`
 configuration (the `augury.unlock` non-consumable, $0.99, development +

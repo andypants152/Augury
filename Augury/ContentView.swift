@@ -51,9 +51,27 @@ struct ContentView: View {
         // Launch: load the product, re-verify the entitlement (a fresh
         // install comes up free; an owned unlock comes up full).
         .task { await purchase.start() }
+        .onAppear { handleSiriDestination(SiriNavigation.consumePendingDestination()) }
+        .onReceive(NotificationCenter.default.publisher(for: SiriNavigation.didRequestDestination)) { note in
+            handleSiriDestination(note.object as? SiriDestination)
+        }
         #if DEBUG
         .onAppear(perform: applyDebugHook)
         #endif
+    }
+
+    /// A Siri request routes the already-mounted rooms, preserving the
+    /// table's identity. `ReadingTable` also hears a live reading request and
+    /// deals fresh; a cold launch deals normally on its first appearance.
+    private func handleSiriDestination(_ destination: SiriDestination?) {
+        switch destination {
+        case .reading:
+            route = .table
+        case .journal:
+            route = .journal
+        case nil:
+            break
+        }
     }
 
     // MARK: Verification hook

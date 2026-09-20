@@ -52,7 +52,13 @@ everything at once; the purchase *result* is never the grant,
 The root (`ContentView`) owns the one store and the one `PurchaseManager`,
 and swaps the two rooms — table / journal — by opacity, so a trip to the
 journal never loses the table's deal, and a hidden table pauses the holo (no
-idle draw).
+idle draw). The 1.0 **bonus** (unnumbered; landed between M9 and M10) adds the
+two Siri / Shortcuts actions (`Intents/AuguryIntents.swift`, routed through
+`Engine/SiriNavigation`) and the **private, on-device reflection**
+(`Engine/ReadingInterpreter` + `UI/ReadingReflectionView`) — Foundation
+Models (Apple Intelligence, iOS 26+): a fresh, stateless session on a
+*completed* spread, in a sheet that pauses the holo like any modal. The model
+only comments on the deal — it never chooses cards, falls, or meanings.
 `roadmap.md` ("Where we are") is the canonical plan.
 
 ## Repo layout
@@ -69,10 +75,10 @@ Augury/
 │   │   ├── card-bg.imageset    ONE shared background (radial indigo glow, stored once)
 │   │   ├── card-back.imageset  the card back
 │   │   └── <name>.imageset/    78 line-art layers, one per card (SVG source + Contents.json)
-│   ├── AuguryApp.swift     @main entry
+│   ├── AuguryApp.swift     @main entry (registers the Siri / Shortcuts phrases)
 │   ├── ContentView.swift   root: owns the one `ReadingStore` +
 │   │                       `PurchaseManager`; hosts the two rooms (the table /
-│   │                       the journal), opacity-swapped
+│   │                       the journal), opacity-swapped; routes Siri requests
 │   ├── Models/
 │   │   ├── Arcana.swift        Suit / ArcanaID (78 cases) / Arcana types + assetName mapping
 │   │   ├── ArcanaCatalog.swift the 78 cards: names, keywords, upright + inverted meanings
@@ -82,8 +88,17 @@ Augury/
 │       ├── HoloFinish.metal  Metal shader: the iridescent foil ("the one live layer")
 │       ├── HoloLayer.swift   SwiftUI ViewModifier applying the shader (TimelineView + colorEffect)
 │       ├── MotionTilt.swift  CMMotionManager attitude tracking (no permission needed)
-│       └── Reading.swift     M5 deal: Orientation / DrawnCard / Reading / SeededRNG /
-│                             ReadingEngine — the one real "random" in the app
+│       ├── Reading.swift     M5 deal: Orientation / DrawnCard / Reading / SeededRNG /
+│       │                     ReadingEngine — the one real "random" in the app
+│       ├── ReadingInterpreter.swift  1.0 bonus: the private, on-device reflection
+│       │                           (Foundation Models, Apple Intelligence, iOS 26+)
+│       │                           — commentary on a completed spread, never the deal
+│       └── SiriNavigation.swift     1.0 bonus: the App-Intent → root handoff channel
+│                                     (pending default for the cold launch; a
+│                                     notification for the running app)
+│   ├── Intents/
+│       └── AuguryIntents.swift  1.0 bonus: the two Siri / Shortcuts actions
+│                                 ("Start a tarot reading", "Open the tarot journal")
 │   ├── Store/
 │   │   ├── ReadingStore.swift M8 journal: `JournalEntry` / `ReadingStore` — one per
 │   │   │                       day (upsert, stamp + note preserved), local JSON,
@@ -101,14 +116,19 @@ Augury/
 │       ├── ReadingTable.swift M6/M7 table: spread picker, dealt face-down, tap to flip +
 │       │                       reveal under the holo, meaning panel, new reading, the M8
 │       │                       save row + journal button; M9: the deal + picker follow
-│       │                       the entitlement, the save row knows the cap
+│       │                       the entitlement, the save row knows the cap; 1.0 bonus:
+│       │                       the "Reading" button (a complete spread) + the
+│       │                       reflection sheet; a Siri request re-deals fresh
 │       ├── JournalView.swift  M8 journal: the day list (newest first) + a day reopened —
 │       │                       cards flip up under the holo, note field; rows use a
 │       │                       motion source that is never started; M9 presents the
 │       │                       tier-visible entries (3 or all) + the one unlock row
-│       └── Paywall.swift M9: the full-screen paywall — the one-time price stated
-│                             plainly (store `displayPrice`, or the documented $0.99
-│                             until it loads) + the three unlocks + restore
+│       ├── Paywall.swift M9: the full-screen paywall — the one-time price stated
+│       │                     plainly (store `displayPrice`, or the documented $0.99
+│       │                     until it loads) + the three unlocks + restore
+│       └── ReadingReflectionView.swift 1.0 bonus: the reflection sheet — the
+│                               model's output above the table (medium/large
+│                               detent; pauses the holo like any modal)
 ├── AuguryTests/
 │   ├── ArcanaTests.swift     78/78 cards, non-empty fields, 156 meanings, 22/56 split, 14/suit
 │   ├── CardArtTests.swift    regression: assetName ↔ draft filename mapping
@@ -119,11 +139,14 @@ Augury/
 │   ├── ReadingStoreTests.swift M8: one-per-day upsert (stamp + note preserved),
 │   │                             kill+relaunch identity, note mutation, corrupt-file
 │   │                             quarantine, uncapped
-│   └── PurchaseManagerTests.swift M9: the entitlement's three gates (free = majors,
+│   ├── PurchaseManagerTests.swift M9: the entitlement's three gates (free = majors,
 │                                     2 spreads, cap 3; full lifts all) + the manager
 │                                     through a fake `StoreKitClient` (one purchase
 │                                     lifts everything; verify never downgrades;
 │                                     price fallback)
+│   ├── ReadingInterpreterTests.swift 1.0 bonus: the prompt's shape — the completed
+│   │                                   spread + the grounding preamble, nothing else
+│   └── SiriNavigationTests.swift 1.0 bonus: the cold-launch pending channel
 ├── drafts/                 ← the source of truth for the ART (committed)
 │   ├── _order.txt              deck order (22 majors, then wands/cups/swords/pentacles)
 │   ├── card-back.svg
@@ -140,8 +163,12 @@ Augury/
 
 ## Build & test
 
-No SPM dependencies — pure SwiftUI + Metal + CoreMotion. Xcode 27, iOS 17.0 deployment
-target, Swift 5 language mode, portrait-only iPhone, bundle id `xyz.andypants.augury`.
+No SPM dependencies — pure SwiftUI + Metal + CoreMotion, + Foundation Models
+(the 1.0 bonus's reflection). Xcode 27, iOS 17.0 deployment target, Swift 5
+language mode, portrait-only iPhone, bundle id `xyz.andypants.augury`. The
+reflection imports the Foundation Models SDK, so **building needs Xcode 26+**;
+at runtime the feature is gated to iOS 26 devices (everything else runs from
+iOS 17).
 
 ```sh
 brew install xcodegen            # one time
@@ -234,7 +261,12 @@ These are the things that silently break or violate the product's promises.
   `Int.random` / `Bool.random` calls elsewhere (the M4 shell had one; M6 retired
   it — the table deals through the engine). In tests, use `SeededRNG` (splitmix64)
   so every deal is a pure function of its seed — reproducible, and the future v2
-  "share the code" hook if it ever wakes up.
+  "share the code" hook if it ever wakes up. The one sanctioned exception is the
+  1.0 bonus's **reflection** (`ReadingInterpreter`): a Foundation Models session
+  may be non-deterministic, but only to *read* a completed spread — never to
+  choose cards, orientations, or canonical meanings. The model is commentary on
+  the deal, not part of it; its sheet pauses the holo like any modal (a card
+  behind it is not face-up), and "New reading" / a Siri re-deal reset it.
 - **The layout is spec-driven, never size-driven** (M7): a spread's positions
   live in *card units* in `Models/Spread.swift`; `UI/SpreadLayout` scales the
   rotation-aware bounding box to fit whatever rect the table leaves. Do not
@@ -289,6 +321,7 @@ These are the things that silently break or violate the product's promises.
 | M7 | All spreads (1-card, 3-card, Celtic cross) | ✅ done — `Models/Spread.swift` + `UI/SpreadLayout.swift`: picker-driven table; the cross's ten face-down fit the smallest iPhone (unit-pinned + screenshot-verified); all three ungated until M9's content gating |
 | M8 | Daily journal | ✅ done — `Store/ReadingStore.swift` + `UI/JournalView.swift`: one-per-day upsert (stamp + note preserved), kill+relaunch identity, local JSON, uncapped (M9's cap is above it); the root owns the store and swaps the two rooms by opacity; save row + journal button in the table |
 | M9 | Free/paid gating | ✅ done — `Store/PurchaseManager.swift` (`Entitlement`: the single gate — the deck, the spreads, the journal cap) + `UI/Paywall.swift` (the one-time $0.99, stated plainly): the table's deal + picker follow the entitlement, the save row + journal know the cap (above the uncapped store), one purchase lifts all three; 20 new tests |
+| Bonus (1.0) | Siri / Shortcuts + the on-device reflection (unnumbered) | ✅ done — `Intents/AuguryIntents.swift` (two actions) + `Engine/ReadingInterpreter.swift` (Foundation Models, iOS 26+; commentary only, never the deal) + `UI/ReadingReflectionView.swift` (the sheet; pauses the holo); needs Xcode 26+ to build; 3 tests |
 | M10 | The one unlock, end to end | planned → the `.storekit` config (`augury.unlock` at $0.99) + the 4/4 simulator pass + real-device sandbox (the manager + entitlement are in from M9) |
 | M11–12 | Polish + App Store ship | planned |
 

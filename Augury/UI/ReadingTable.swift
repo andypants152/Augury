@@ -44,6 +44,9 @@ struct ReadingTable: View {
     /// One shared motion source for the whole table: CoreMotion starts while
     /// any card is revealed, stops when none are — ten cards, one sensor.
     @StateObject private var tilt = MotionTilt()
+    /// The optional on-device reflection (Foundation Models). It never
+    /// participates in shuffling, dealing, or the canonical card meanings.
+    @StateObject private var interpreter = ReadingInterpreter()
 
     /// Gate 1 (M9): the deck the engine shuffles from — the 22 majors free,
     /// the 78 full. (Was `Arcana.all`; the entitlement owns it now.)
@@ -66,12 +69,13 @@ struct ReadingTable: View {
     /// The paywall (M9) — presented when a free user meets a gate: the
     /// unlock affordance, or the journal's 3-day cap on save.
     @State private var showingPaywall = false
+    @State private var showingReflection = false
 
     /// The scene's live state (M8 adds the room gate, M9 adds the paywall
     /// gate): the scene is active, the table is the room on screen, and the
     /// paywall is not covering it. A card behind a modal is not a face-up
     /// card — the holo pauses and the sensor stops.
-    private var sceneLive: Bool { !isHidden && !showingPaywall && scenePhase == .active }
+    private var sceneLive: Bool { !isHidden && !showingPaywall && !showingReflection && scenePhase == .active }
 
     /// A card that is up *and* whose scene is live: the holo/motion state.
     private var live: Bool { sceneLive && !revealed.isEmpty }
@@ -108,6 +112,12 @@ struct ReadingTable: View {
         .onChange(of: live) { _, isLive in
             tilt.setFaceUp(isLive)
         }
+        .onReceive(NotificationCenter.default.publisher(for: SiriNavigation.didRequestDestination)) { note in
+            guard note.object as? SiriDestination == .reading else { return }
+            showingReflection = false
+            interpreter.reset()
+            withAnimation(flip) { deal() }
+        }
         // M9: the entitlement changed (a purchase, or the debug tier hook).
         // If the spread on the table is no longer one the tier offers (a
         // full → free debug flip on the cross), fall back to the M6 spread
@@ -122,6 +132,15 @@ struct ReadingTable: View {
         }
         .fullScreenCover(isPresented: $showingPaywall) {
             Paywall(purchase: purchase) { showingPaywall = false }
+        }
+        .sheet(isPresented: $showingReflection) {
+            if let reading {
+                ReadingReflectionView(reading: reading,
+                                      spread: spread,
+                                      interpreter: interpreter,
+                                      onDismiss: { showingReflection = false })
+                    .presentationDetents([.medium, .large])
+            }
         }
         .accessibilityElement(children: .contain)
     }
@@ -153,13 +172,41 @@ struct ReadingTable: View {
     // MARK: The spread picker (M9: offers what the tier has)
 
     private var spreadPicker: some View {
-        Picker("Spread", selection: $spread) {
-            ForEach(purchase.entitlement.spreads) { s in
-                Text(s.name).tag(s)
+        VStack(alignment: .leading, spacing: 7) {
+            Text("Drawing type")
+                .font(.caption.weight(.semibold))
+                .textCase(.uppercase)
+                .tracking(0.8)
+                .foregroundStyle(.white.opacity(0.62))
+
+            HStack(spacing: 6) {
+                ForEach(purchase.entitlement.spreads) { s in
+                    let selected = spread.id == s.id
+                    Button {
+                        spread = s
+                    } label: {
+                        Text(s.name)
+                            .font(.footnote.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                            .frame(maxWidth: .infinity)
+                            .foregroundStyle(selected ? Color(red: 0.05, green: 0.08, blue: 0.19) : .white.opacity(0.82))
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 8)
+                            .background(selected ? Self.uprightInk : Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 10))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(selected ? Self.uprightInk.opacity(0.9) : .white.opacity(0.22), lineWidth: 1)
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(s.name) drawing type")
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
             }
         }
-        .pickerStyle(.segmented)
-        .accessibilityLabel("Choose a spread")
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Choose a drawing type")
     }
 
     // MARK: The cards
@@ -368,38 +415,56 @@ struct ReadingTable: View {
         }
     }
 
-    private var bottomRow: some View {
-        HStack(spacing: 12) {
-            Button(action: onOpenJournal) {
-                Label {
-                    Text("Journal")
-                } icon: {
-                    Image(systemName: "book")
-                        .overlay(alignment: .topTrailing) {
-                            // M9: the badge counts what the tier presents
-                            // (≤ 3 free, all full) — not the raw store.
-                            if !visibleEntries.isEmpty {
-                                let n = visibleEntries.count
-                                Text(n > 9 ? "9+" : "\(n)")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundStyle(.black)
-                                    .padding(3)
-                                    .background(Self.uprightInk, in: Circle())
-                                    .offset(x: 6, y: -6)
-                            }
-                        }
-                }
+    private var readingButton: some View {
+        Button(action: { showingReflection = true }) {
+            Label("Reading", systemImage: "sparkles")
                 .font(.body.weight(.medium))
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(Self.uprightInk)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 20)
                 .background(Color.white.opacity(0.08), in: Capsule())
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
-            }
-            .accessibilityLabel("Journal")
-            .accessibilityValue("\(visibleEntries.count) saved day\(visibleEntries.count == 1 ? "" : "s")")
+                .overlay(Capsule().strokeBorder(Self.uprightInk.opacity(0.3)))
+        }
+        .accessibilityLabel("Create a private, on-device reflection on this reading")
+    }
 
-            newReadingButton
+    private var bottomRow: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Button(action: onOpenJournal) {
+                    Label {
+                        Text("Journal")
+                    } icon: {
+                        Image(systemName: "book")
+                            .overlay(alignment: .topTrailing) {
+                                // M9: the badge counts what the tier presents
+                                // (≤ 3 free, all full) — not the raw store.
+                                if !visibleEntries.isEmpty {
+                                    let n = visibleEntries.count
+                                    Text(n > 9 ? "9+" : "\(n)")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(.black)
+                                        .padding(3)
+                                        .background(Self.uprightInk, in: Circle())
+                                        .offset(x: 6, y: -6)
+                                }
+                            }
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.75))
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 20)
+                    .background(Color.white.opacity(0.08), in: Capsule())
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.15)))
+                }
+                .accessibilityLabel("Journal")
+                .accessibilityValue("\(visibleEntries.count) saved day\(visibleEntries.count == 1 ? "" : "s")")
+
+                newReadingButton
+            }
+            if reading != nil && revealed.count == count {
+                readingButton
+            }
         }
         .padding(.bottom, 6)
     }
@@ -421,6 +486,8 @@ struct ReadingTable: View {
     /// revealed cards flip back over (the new art is hidden under the backs
     /// until flipped).
     private func newReading() {
+        showingReflection = false
+        interpreter.reset()
         withAnimation(flip) { deal() }
     }
 
@@ -456,6 +523,8 @@ struct ReadingTable: View {
     ///   `-auguryRevealed`     — reveal every position (holo + meaning panel)
     ///   `-auguryInverted`     — force every card to fall inverted
     ///   `-auguryPaywall`      — open the paywall (the M9 screenshot pass)
+    ///   `-auguryReflection`   — reveal the spread and open the reflection
+    ///                           sheet (the 1.0 bonus screenshot pass)
     /// Value flags accept either `-flag value` or `-flag=value`.
     private func applyDebugHook() {
         if let raw = launchArg("-augurySpread"),
@@ -481,6 +550,11 @@ struct ReadingTable: View {
         if CommandLine.arguments.contains("-auguryRevealed") {
             revealed = Set(0..<spread.count)
             focus = 0
+        }
+        if CommandLine.arguments.contains("-auguryReflection"), reading != nil {
+            revealed = Set(0..<count)
+            focus = 0
+            showingReflection = true
         }
         if CommandLine.arguments.contains("-auguryPaywall") {
             showingPaywall = true
