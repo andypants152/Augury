@@ -70,12 +70,13 @@ struct ReadingTable: View {
     /// unlock affordance, or the journal's 3-day cap on save.
     @State private var showingPaywall = false
     @State private var showingReflection = false
+    @State private var showingLibrary = false
 
     /// The scene's live state (M8 adds the room gate, M9 adds the paywall
     /// gate): the scene is active, the table is the room on screen, and the
     /// paywall is not covering it. A card behind a modal is not a face-up
     /// card — the holo pauses and the sensor stops.
-    private var sceneLive: Bool { !isHidden && !showingPaywall && !showingReflection && scenePhase == .active }
+    private var sceneLive: Bool { !isHidden && !showingPaywall && !showingReflection && !showingLibrary && scenePhase == .active }
 
     /// A card that is up *and* whose scene is live: the holo/motion state.
     private var live: Bool { sceneLive && !revealed.isEmpty }
@@ -142,6 +143,9 @@ struct ReadingTable: View {
                     .presentationDetents([.medium, .large])
             }
         }
+        .fullScreenCover(isPresented: $showingLibrary) {
+            CardLibraryView()
+        }
         .accessibilityElement(children: .contain)
     }
 
@@ -153,6 +157,14 @@ struct ReadingTable: View {
                 .font(.title2.weight(.medium))
                 .foregroundStyle(.white.opacity(0.7))
             Spacer()
+            Button(action: { showingLibrary = true }) {
+                Image(systemName: "rectangle.stack")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.06), in: Circle())
+            }
+            .accessibilityLabel("Open the card library")
             if !purchase.entitlement.isFull {
                 Button(action: { showingPaywall = true }) {
                     Label("Unlock", systemImage: "lock")
