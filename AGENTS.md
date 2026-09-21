@@ -296,8 +296,8 @@ These are the things that silently break or violate the product's promises.
   never strands a day — only the *next* day prompts for the unlock). The
   purchase *result* is never the grant: the UI believes
   `currentEntitlements`, and a non-consumable verify never downgrades.
-  `-auguryTier full|free` (a debug launch arg, handled at the root) stands in
-  for the purchase until M10's `.storekit` lands.
+  `-auguryTier full|free` (a debug launch arg, handled at the root) remains
+  available as an M11 screenshot aid.
 - **Style constants** (in `generate.py`): 540×960 canvas (9:16); background
   `#141b3f → #090e24`; starlight lines `#dfe7ff`; gold frame `#e6c79c`; stroke widths
   3.4 / 2.4 / 1.5. Seventy-eight cards that don't look like *one* deck reads as a
@@ -322,7 +322,7 @@ These are the things that silently break or violate the product's promises.
 | M8 | Daily journal | ✅ done — `Store/ReadingStore.swift` + `UI/JournalView.swift`: one-per-day upsert (stamp + note preserved), kill+relaunch identity, local JSON, uncapped (M9's cap is above it); the root owns the store and swaps the two rooms by opacity; save row + journal button in the table |
 | M9 | Free/paid gating | ✅ done — `Store/PurchaseManager.swift` (`Entitlement`: the single gate — the deck, the spreads, the journal cap) + `UI/Paywall.swift` (the one-time $0.99, stated plainly): the table's deal + picker follow the entitlement, the save row + journal know the cap (above the uncapped store), one purchase lifts all three; 20 new tests |
 | Bonus (1.0) | Siri / Shortcuts + the on-device reflection (unnumbered) | ✅ done — `Intents/AuguryIntents.swift` (two actions) + `Engine/ReadingInterpreter.swift` (Foundation Models, iOS 26+; commentary only, never the deal) + `UI/ReadingReflectionView.swift` (the sheet; pauses the holo); needs Xcode 26+ to build; 3 tests |
-| M10 | The one unlock, end to end | planned → the `.storekit` config (`augury.unlock` at $0.99) + the 4/4 simulator pass + real-device sandbox (the manager + entitlement are in from M9) |
+| M10 | The one unlock, end to end | ✅ done — `.storekit` config (`augury.unlock` at $0.99), simulator verification, and owner-confirmed real-device sandbox flow (fetch, purchase, relaunch persistence, Restore Purchases) |
 | M11–12 | Polish + App Store ship | planned |
 
 Don't be confused about the app today: `ContentView` owns the one
@@ -333,9 +333,9 @@ meaning; the layout is spec-driven through `UI/SpreadLayout`, never hard-coded
 sizes; M8 adds the save row + the journal button; M9 makes the deal + picker
 follow the entitlement) and the journal (`UI/JournalView`, M8: the day list,
 a day reopened; M9 presents the tier-visible entries + the one unlock row).
-`UI/Card.swift` holds the card components both rooms reuse. The one planned
-piece still missing from the tree: the `.storekit` configuration (M10 — the
-`augury.unlock` product at $0.99).
+`UI/Card.swift` holds the card components both rooms reuse. The StoreKit
+configuration is in the tree at `Augury/Augury.storekit`; its `augury.unlock`
+non-consumable is $0.99, and its real-device sandbox flow is verified.
 
 ## Git & hygiene
 

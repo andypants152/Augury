@@ -288,15 +288,16 @@ bypass the free journal cap. Building the reflections needs Xcode 26+; the
 app's floor stays iOS 17 (pre-26 devices get an honest unavailable state). 5
 tests; the tree is green.
 
-**M10 is implemented locally — StoreKit 2, end to end.** `Augury.storekit`
+**M10 is done — StoreKit 2, end to end.** `Augury.storekit`
 defines the one `augury.unlock` non-consumable at $0.99, and the shared Run
 scheme attaches it to simulator launches. The purchase manager's unit suite
 pins free/full initialization, including the complimentary TestFlight path;
 the local simulator runbook covers fetch, purchase, relaunch persistence, and
-the fresh-install/Restore check. The final real-device sandbox transaction is
-an owner-only verification step: it needs the App Store Connect product and a
-sandbox tester, neither of which belongs in the repository. The `-auguryTier`
-debug hook stays available as an M11 screenshot aid.
+the fresh-install/Restore check. The App Store Connect product and sandbox
+tester are configured, and the owner completed the real-device sandbox flow:
+product fetch, purchase, relaunch persistence, and Restore Purchases all
+looked correct. The `-auguryTier` debug hook stays available as an M11
+screenshot aid.
 
 ---
 
@@ -399,7 +400,8 @@ reading product.
   SVG.)
 - **CoreMotion attitude needs no permission** — but confirm the exact `startDeviceMotionUpdates`
   call you use doesn't creep into a health-adjacent API that *would* need `NSMotionUsageDescription`.
-- **StoreKit is the only live-untested part until a real device sandbox purchase** (M10).
+- **StoreKit live verification is complete** (M10); repeat the real-device sandbox
+  check before release if the entitlement or product configuration changes.
 
 ---
 

@@ -60,6 +60,10 @@ struct JournalView: View {
                 JournalDetailView(entryID: id,
                                   isActive: selected == id,
                                   onBack: { selected = nil })
+                    // A detail owns reveal, focus, note-field, and motion
+                    // state. A newly selected day must not inherit any of
+                    // that state from the day opened before it.
+                    .id(id)
                     .opacity(selected == id ? 1 : 0)
                     .allowsHitTesting(selected == id)
                     .accessibilityHidden(selected != id)
@@ -380,10 +384,12 @@ struct JournalDetailView: View {
         }
         .accessibilityElement(children: .contain)
         .onAppear {
-            if !noteSeeded {
-                noteText = entry?.note ?? ""
-                noteSeeded = true
-            }
+            seedStateFromEntry()
+            // `onChange` only observes transitions after the view exists;
+            // the first selected entry arrives already active. Start its
+            // shared motion source here as well, rather than leaving the
+            // first reopened day in the no-sensor state.
+            tilt.setFaceUp(live)
         }
         // The ritual, in and out: opening the day flips the three up
         // (staggered); leaving flips them back down. Under Reduce Motion the
@@ -523,6 +529,17 @@ struct JournalDetailView: View {
 
     private func commitNote() {
         store.setNote(noteText, for: entryID)
+    }
+
+    /// A detail is keyed to its entry ID, so this is run once per selected
+    /// day. Keeping the reveal state in step with the entry avoids showing
+    /// the previous day's cards while SwiftUI reconciles the new selection.
+    private func seedStateFromEntry() {
+        guard !noteSeeded else { return }
+        noteText = entry?.note ?? ""
+        noteSeeded = true
+        focus = 0
+        faceUp = Array(repeating: isActive, count: Spread.threeCards.positions.count)
     }
 
     /// Under Reduce Motion: a plain crossfade instead of a 3D flip (the

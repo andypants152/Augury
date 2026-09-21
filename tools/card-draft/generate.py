@@ -709,18 +709,37 @@ def build_card_art(name, spec, seed):
 
 
 def build_back(seed, include_bg=True):
-    """The card back — a crest, not a card: zodiac ring + eight-point star + crescent,
-    a slightly denser starfield, and the maker's mark. One file, made once.
-    `include_bg=False` writes the transparent line-art layer for the app."""
-    rng = random.Random(seed)
-    cx, cy = FX, FY
-    ring = [dot(cx + 170 * math.cos(a), cy + 170 * math.sin(a), 3.2, op=0.8)
-            for i, a in ((i, i * math.pi / 6 - math.pi / 2) for i in range(12))]
+    """The card back — a quiet crescent-and-star seal, not a second illustration.
+
+    The earlier zodiac ring, large eight-point star, and crescent crossed over
+    one another and made the back read as visual noise at card size. This
+    keeps one generous crescent and one separate guiding star, with a sparse,
+    deliberately placed field around them. `include_bg=False` writes the
+    transparent line-art layer for the app.
+    """
     layers = bg() if include_bg else []
-    layers += starfield(rng, n=90)
-    layers += ring
-    layers += star(cx, cy, 120, points=8, inner=0.42, op=0.95)
-    layers += crescent(cx, cy + 14, 62, open=0.6, angle=math.pi / 2)
+    # A fixed, open field: enough depth to feel celestial, never enough to
+    # compete with the single crescent-and-star seal.
+    for x, y, r, op in ((94, 184, 2.2, 0.32), (150, 302, 1.6, 0.24),
+                        (430, 210, 2.0, 0.30), (456, 374, 1.4, 0.20),
+                        (104, 576, 1.7, 0.22), (438, 606, 2.1, 0.28),
+                        (162, 714, 1.4, 0.18), (390, 760, 1.8, 0.24),
+                        (100, 826, 2.0, 0.26), (452, 850, 1.5, 0.20)):
+        layers.append(dot(x, y, r, op=op))
+    for x, y, r, op in ((118, 420, 7, 0.30), (420, 485, 6, 0.24),
+                        (216, 220, 5, 0.22), (342, 690, 6, 0.26),
+                        (270, 790, 5, 0.20), (82, 690, 5, 0.18)):
+        layers += spark(x, y, r, points=4, w=THIN_W, color=LINE, op=op)
+    # The two marks deliberately do not touch: one solid crescent on the
+    # left and the guiding star beside it. A closed crescent silhouette reads
+    # cleanly at small size; two overlapping outline arcs did not.
+    layers.append(path(
+        "M 214 325 "
+        "C 104 360 104 475 214 510 "
+        "C 164 460 164 375 214 325 Z",
+        fill=LINE, stroke="none", **{"fill-opacity": "0.92"}))
+    layers += star(338, FY - 20, 52, points=4, inner=0.28,
+                   w=MOTIF_W, color=LINE, op=0.95)
     layers += frame()
     layers += [nameplate("Augury")]
     return svg_doc(layers)

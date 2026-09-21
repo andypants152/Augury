@@ -56,8 +56,9 @@ the `augury.unlock` non-consumable at $0.99. Run the app on a simulator, tap
 **Unlock**, complete the local StoreKit confirmation, then relaunch: the full
 deck, Celtic cross, and unlimited journal must remain available. Reset local
 transactions from Xcode's StoreKit transaction manager before repeating the
-fresh-install/Restore check. A real-device sandbox purchase still requires an
-App Store Connect sandbox tester and the production product setup.
+fresh-install/Restore check. The real-device sandbox flow has also been
+verified against the App Store Connect product: fetch, purchase, relaunch
+persistence, and Restore Purchases all looked correct.
 
 ## Layout
 
