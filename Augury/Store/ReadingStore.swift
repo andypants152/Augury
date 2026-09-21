@@ -27,17 +27,22 @@ struct JournalEntry: Identifiable, Hashable, Codable {
     /// `Reading`, so the store itself stays general.
     let reading: Reading
 
-    /// The user's own words about the day — the one mutable field.
+    /// The user's own words about the day.
     var note: String?
+    /// An explicitly saved, on-device reflection for this day's reading.
+    /// It is never generated or persisted automatically.
+    var reflection: String?
 
     init(id: UUID = UUID(),
          date: Date = Date(),
          reading: Reading,
-         note: String? = nil) {
+         note: String? = nil,
+         reflection: String? = nil) {
         self.id = id
         self.date = date
         self.reading = reading
         self.note = note
+        self.reflection = reflection
     }
 }
 
@@ -53,8 +58,8 @@ struct JournalEntry: Identifiable, Hashable, Codable {
 ///   day's cards, keeping the entry's identity, its first-saved stamp, and
 ///   the user's note. Every *earlier* day is untouched.
 /// - **Append-only.** Past days are never rewritten, re-dated, or removed —
-///   there is no delete, by design. The only field-level mutation the
-///   journal allows is the note (`setNote`).
+///   there is no delete, by design. Notes and explicitly saved reflections
+///   are the only mutable day-local fields.
 /// - **Local JSON, offline.** The journal lives on the device (Application
 ///   Support), in one file — the no-account / no-network promise. Writes are
 ///   atomic; a corrupt file is quarantined with a timestamp, never silently
@@ -119,7 +124,8 @@ final class ReadingStore: ObservableObject {
             entry = JournalEntry(id: existing.id,
                                  date: existing.date,
                                  reading: reading,
-                                 note: existing.note)
+                                 note: existing.note,
+                                 reflection: existing.reading == reading ? existing.reflection : nil)
             entries[i] = entry
         } else {
             entry = JournalEntry(date: date, reading: reading)
@@ -135,6 +141,14 @@ final class ReadingStore: ObservableObject {
         guard let i = entries.firstIndex(where: { $0.id == id }) else { return }
         let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines)
         entries[i].note = (trimmed?.isEmpty == false) ? trimmed : nil
+        persist()
+    }
+
+    /// Explicitly keep (or clear) the generated reflection for this entry.
+    func setReflection(_ text: String?, for id: UUID) {
+        guard let i = entries.firstIndex(where: { $0.id == id }) else { return }
+        let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines)
+        entries[i].reflection = (trimmed?.isEmpty == false) ? trimmed : nil
         persist()
     }
 

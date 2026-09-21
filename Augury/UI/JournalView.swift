@@ -340,6 +340,9 @@ struct JournalDetailView: View {
     /// The note field, seeded from the entry and committed on submit.
     @State private var noteText = ""
     @State private var noteSeeded = false
+    /// The detail remains mounted while hidden so its card state survives;
+    /// this explicit focus state makes sure its keyboard does not survive too.
+    @FocusState private var noteFocused: Bool
 
     /// The entry, always read live from the store — a committed note shows
     /// up here without a view-identity shuffle.
@@ -371,15 +374,18 @@ struct JournalDetailView: View {
 
             ZStack {
                 Color.black.ignoresSafeArea()
-                VStack(spacing: 16) {
-                    header
-                    cardRow(cardW: cardW, cardH: cardH)
-                    meaningPanel
-                    noteSection
-                    Spacer(minLength: 0)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        header
+                        cardRow(cardW: cardW, cardH: cardH)
+                        meaningPanel
+                        reflectionSection
+                        noteSection
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 14)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
             }
         }
         .accessibilityElement(children: .contain)
@@ -395,6 +401,7 @@ struct JournalDetailView: View {
         // (staggered); leaving flips them back down. Under Reduce Motion the
         // `RevealCard` crossfades instead, and the holo sits frozen.
         .onChange(of: isActive) { _, active in
+            if !active { noteFocused = false }
             for i in faceUp.indices where faceUp[i] != active {
                 withAnimation(flip.delay(Double(i) * 0.12)) {
                     faceUp[i] = active
@@ -499,7 +506,24 @@ struct JournalDetailView: View {
         }
     }
 
-    // MARK: The note (the journal's only mutable field)
+    // MARK: Saved reflection and note
+
+    @ViewBuilder
+    private var reflectionSection: some View {
+        if let reflection = entry?.reflection {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Saved reflection")
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
+                    .foregroundStyle(.white.opacity(0.45))
+                Text(reflection)
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
 
     private var noteSection: some View {
         VStack(spacing: 8) {
@@ -516,6 +540,7 @@ struct JournalDetailView: View {
                 .padding(.vertical, 10)
                 .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
                 .onSubmit(commitNote)
+                .focused($noteFocused)
                 .accessibilityLabel("Note for this day")
         }
         // A commit trims in the store; echo the canonical form back into the
@@ -529,6 +554,7 @@ struct JournalDetailView: View {
 
     private func commitNote() {
         store.setNote(noteText, for: entryID)
+        noteFocused = false
     }
 
     /// A detail is keyed to its entry ID, so this is run once per selected

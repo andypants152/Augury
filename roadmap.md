@@ -283,8 +283,9 @@ only randomness). The "Reading" button appears on a complete spread; a Siri
 re-deal and "New reading" reset it. The Journal also offers a **Weekly**
 reading: it supplies the last seven calendar days' tier-visible three-card
 entries and their notes to a fresh, private on-device session. The reflection
-is never persisted or used to mutate the append-only journal, and it does not
-bypass the free journal cap. Building the reflections needs Xcode 26+; the
+is never persisted unless the reader explicitly saves a completed three-card
+reflection to that day's local journal entry; weekly reflections remain
+non-persistent. This does not bypass the free journal cap. Building the reflections needs Xcode 26+; the
 app's floor stays iOS 17 (pre-26 devices get an honest unavailable state). 5
 tests; the tree is green.
 
@@ -311,7 +312,7 @@ screenshot aid.
 | `MotionTilt` | `Engine/MotionTilt.swift` | wraps `CMMotionManager`; starts/stops with card state; no usage permission needed (attitude only); simulator/no-sensor → time-based fallback shimmer |
 | `Spread` | `Models/Spread.swift` | spread definitions: 1-card, 3-card, Celtic cross — positions + prompts |
 | `Reading` | `Engine/Reading.swift` | shuffles the unlocked deck, deals to positions, assigns upright/inverted per card. The one real "random" (a shuffle) |
-| `ReadingStore` | `Store/ReadingStore.swift` | the daily journal: 3-card draws logged per day (cards + positions + date + note); append-only, local JSON |
+| `ReadingStore` | `Store/ReadingStore.swift` | the daily journal: 3-card draws logged per day (cards + positions + date + note + explicitly saved reflection); append-only, local JSON |
 | `WeeklyJournal` + `WeeklyReadingInterpreter` | `Engine/WeeklyReadingInterpreter.swift` | filters the current seven calendar days and privately reflects on their tier-visible entries + notes; never persists generated text |
 | `PurchaseManager` | `Store/PurchaseManager.swift` | StoreKit 2: fetch/purchase/restore; entitlement local, re-verified on launch |
 | UI | `UI/*.swift` | the table, draw + flip + reveal (holo on reveal), spreads, journal, paywall card |

@@ -207,6 +207,20 @@ final class ReadingStoreTests: XCTestCase {
         XCTAssertNil(reread.entries[0].note, "the clearing persists")
     }
 
+    func testExplicitReflectionPersistsAndResaveClearsAStaleReflection() {
+        let dir = tempDir()
+        let store = ReadingStore(directory: dir)
+        let date = makeDate(2026, 6, 3)
+        let entry = store.save(deal(seed: 0x42), date: date)
+
+        store.setReflection("  A patient turning point.  ", for: entry.id)
+        XCTAssertEqual(store.entries[0].reflection, "A patient turning point.")
+        XCTAssertEqual(ReadingStore(directory: dir).entries[0].reflection, "A patient turning point.")
+
+        let replaced = store.save(deal(seed: 0x43), date: date)
+        XCTAssertNil(replaced.reflection, "a reflection must not describe replaced cards")
+    }
+
     // ── the file itself ─────────────────────────────────────────────────────
 
     /// A journal that has never existed is an empty journal, not a crash.

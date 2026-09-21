@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 /// The journal's non-persistent, on-device look back over the last week.
 struct WeeklyReadingView: View {
     let entries: [JournalEntry]
     @ObservedObject var interpreter: WeeklyReadingInterpreter
     let onDismiss: () -> Void
+    @State private var copied = false
 
     var body: some View {
         NavigationStack {
@@ -54,6 +56,15 @@ struct WeeklyReadingView: View {
                         Text(reflection).font(.body).foregroundStyle(.white.opacity(0.9))
                         Text("A reflection, not a prediction or a journal record.")
                             .font(.footnote).foregroundStyle(.white.opacity(0.45))
+                        HStack(spacing: 14) {
+                            Button {
+                                UIPasteboard.general.string = reflection
+                                copied = true
+                            } label: { Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc") }
+                            ShareLink(item: reflection) { Label("Share", systemImage: "square.and.arrow.up") }
+                        }
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(ReadingTable.uprightInk)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
