@@ -221,6 +221,23 @@ final class ReadingStoreTests: XCTestCase {
         XCTAssertNil(replaced.reflection, "a reflection must not describe replaced cards")
     }
 
+    func testExportIncludesEveryLocalFieldAndEraseAllRemovesTheFile() {
+        let dir = tempDir()
+        let store = ReadingStore(directory: dir)
+        let entry = store.save(deal(seed: 0x44), date: makeDate(2026, 6, 3))
+        store.setNote("Keep this private.", for: entry.id)
+        store.setReflection("A saved reflection.", for: entry.id)
+
+        let exported = JournalExport.text(entries: store.entries)
+        XCTAssertTrue(exported.contains("Past:"))
+        XCTAssertTrue(exported.contains("Keep this private."))
+        XCTAssertTrue(exported.contains("A saved reflection."))
+
+        store.eraseAll()
+        XCTAssertTrue(store.entries.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent(ReadingStore.fileName).path))
+    }
+
     // ── the file itself ─────────────────────────────────────────────────────
 
     /// A journal that has never existed is an empty journal, not a crash.

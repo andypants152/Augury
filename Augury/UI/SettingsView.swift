@@ -4,6 +4,7 @@ import SwiftUI
 /// are local notifications and request system permission only when enabled.
 struct SettingsView: View {
     @EnvironmentObject private var purchase: PurchaseManager
+    @EnvironmentObject private var store: ReadingStore
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("preferredDeck") private var preferredDeckRaw = ReadingDeckPreference.fullDeck.rawValue
@@ -15,6 +16,7 @@ struct SettingsView: View {
     @State private var authorization: RitualReminderAuthorization = .notDetermined
     @State private var showingPaywall = false
     @State private var reminderError = false
+    @State private var confirmingErase = false
 
     private var preferredDeck: Binding<ReadingDeckPreference> {
         Binding(
@@ -102,6 +104,19 @@ struct SettingsView: View {
                             .foregroundStyle(.red)
                     }
                 }
+
+                Section("Your journal") {
+                    ShareLink(item: JournalExport.text(entries: store.entries)) {
+                        Label("Export journal", systemImage: "square.and.arrow.up")
+                    }
+                    Button(role: .destructive) { confirmingErase = true } label: {
+                        Label("Erase all Journal Data", systemImage: "trash")
+                            .foregroundStyle(.red)
+                    }
+                    Text("Export includes saved cards, notes, and explicitly saved reflections. Erasing removes all of them from this device.")
+                        .font(.footnote)
+                        .foregroundStyle(Color.secondary)
+                }
             }
             .scrollContentBackground(.hidden)
             .background(Color.black)
@@ -127,6 +142,11 @@ struct SettingsView: View {
         .onChange(of: reminderWeekday) { _, _ in rescheduleIfNeeded() }
         .fullScreenCover(isPresented: $showingPaywall) {
             Paywall(purchase: purchase) { showingPaywall = false }
+        }
+        .confirmationDialog("Erase all journal data?", isPresented: $confirmingErase, titleVisibility: .visible) {
+            Button("Erase all Journal Data", role: .destructive) { store.eraseAll() }
+        } message: {
+            Text("This permanently removes every saved reading, note, and reflection from this device. This cannot be undone.")
         }
     }
 

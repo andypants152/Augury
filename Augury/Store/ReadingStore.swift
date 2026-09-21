@@ -152,6 +152,16 @@ final class ReadingStore: ObservableObject {
         persist()
     }
 
+    /// Permanently remove the reader's local journal. This is intentionally
+    /// all-or-nothing: individual days remain append-only, while the owner
+    /// of the device always retains a clear way to erase their private data.
+    func eraseAll() {
+        if fileManager.fileExists(atPath: fileURL.path) {
+            try? fileManager.removeItem(at: fileURL)
+        }
+        entries = []
+    }
+
     // MARK: Queries
 
     /// The entry for a given day, if any — the table's "is today already
@@ -203,5 +213,27 @@ final class ReadingStore: ObservableObject {
             try? fileManager.moveItem(at: fileURL, to: quarantined)
             return []
         }
+    }
+}
+
+/// A readable, local export for the reader to copy or share. No network,
+/// account, or third-party service participates in producing this text.
+enum JournalExport {
+    static func text(entries: [JournalEntry], calendar: Calendar = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+
+        let body = entries.map { entry in
+            let cards = zip(Spread.threeCards.positions, entry.reading.draws).map { position, drawn in
+                "\(position.name): \(drawn.card.name) (\(drawn.orientation.label))\n\(drawn.meaning)"
+            }.joined(separator: "\n\n")
+            var sections = [formatter.string(from: entry.date), cards]
+            if let reflection = entry.reflection { sections.append("Saved reflection\n\(reflection)") }
+            if let note = entry.note { sections.append("Note\n\(note)") }
+            return sections.joined(separator: "\n\n")
+        }
+        return body.isEmpty ? "Augury journal\n\nNo saved readings." : "Augury journal\n\n\(body.joined(separator: "\n\n---\n\n"))"
     }
 }
