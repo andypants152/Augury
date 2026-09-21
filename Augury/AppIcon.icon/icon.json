@@ -1,0 +1,23 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.03529,0.05490,0.14118,1.00000"
+  },
+  "groups" : [
+    {
+      "name" : "Liquid glass base",
+      "layers" : [
+        {
+          "name" : "Augury celestial mark",
+          "kind" : "image",
+          "image-name" : "augury-glass-base.png",
+          "glass" : true
+        }
+      ]
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "iOS"
+    ]
+  }
+}

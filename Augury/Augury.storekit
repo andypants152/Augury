@@ -1,0 +1,27 @@
+{
+  "identifier" : "5DDB75C3-541A-4A92-A07B-2BE168ED8F59",
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "CA256189-0F68-41A1-900F-5B356F817581",
+      "localizations" : [
+        {
+          "description" : "One purchase. Yours forever. The full 78 cards, all three spreads, and an unlimited daily journal.",
+          "displayName" : "Full Deck & Unlimited Journal",
+          "locale" : "en-US"
+        }
+      ],
+      "productID" : "augury.unlock",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_inAppPurchasingConsumptionDuration" : 0,
+    "_receiptsEnabled" : false
+  },
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}

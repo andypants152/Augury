@@ -20,6 +20,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Augury
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
         MARKETING_VERSION: "0.1.0"
@@ -35,3 +36,29 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: xyz.andypants.augury.tests
     dependencies:
       - target: Augury
+  AuguryUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - AuguryUITests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: xyz.andypants.augury.uitests
+    dependencies:
+      - target: Augury
+schemes:
+  Augury:
+    build:
+      targets:
+        Augury: all
+        AuguryTests: [test]
+    run:
+      config: Debug
+      # This attaches the local StoreKit store to simulator launches from the
+      # shared scheme. It intentionally is not an app build setting.
+      storeKitConfiguration: Augury/Augury.storekit
+    test:
+      config: Debug
+      targets:
+        - AuguryTests

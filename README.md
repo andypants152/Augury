@@ -49,6 +49,16 @@ Foundation Models SDK — that's the Xcode 26 floor; at runtime the feature is
 available only on iOS 26+ devices with Apple Intelligence, and everything
 else in the app runs from iOS 17.
 
+### StoreKit development check
+
+The shared `Augury` Run scheme attaches `Augury/Augury.storekit`, which defines
+the `augury.unlock` non-consumable at $0.99. Run the app on a simulator, tap
+**Unlock**, complete the local StoreKit confirmation, then relaunch: the full
+deck, Celtic cross, and unlimited journal must remain available. Reset local
+transactions from Xcode's StoreKit transaction manager before repeating the
+fresh-install/Restore check. A real-device sandbox purchase still requires an
+App Store Connect sandbox tester and the production product setup.
+
 ## Layout
 
 - `Augury/` — the app target

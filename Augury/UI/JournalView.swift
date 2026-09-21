@@ -33,11 +33,13 @@ struct JournalView: View {
     /// The paywall (M9) — presented when a free user at the 3-day cap taps
     /// the unlock row.
     @State private var showingPaywall = false
+    @State private var showingWeeklyReading = false
 
     /// The rows' mini-cards borrow a motion source that is **never started**:
     /// an archive row is not a face-up card, so the holo sits paused (no
     /// CoreMotion, no idle draw — the detail owns the live sheen).
     @StateObject private var rowTilt = MotionTilt()
+    @StateObject private var weeklyInterpreter = WeeklyReadingInterpreter()
 
     /// The store arrives from the environment (the root owns it); the only
     /// injected dependency is the back route. An explicit init — the
@@ -67,6 +69,12 @@ struct JournalView: View {
         .fullScreenCover(isPresented: $showingPaywall) {
             Paywall(purchase: purchase) { showingPaywall = false }
         }
+        .sheet(isPresented: $showingWeeklyReading) {
+            WeeklyReadingView(entries: weeklyEntries,
+                              interpreter: weeklyInterpreter,
+                              onDismiss: { showingWeeklyReading = false })
+                .presentationDetents([.medium, .large])
+        }
         #if DEBUG
         // onChange, not onAppear: this room appears *before* the root seeds
         // the journal, so the hook keys off the store's first publish.
@@ -81,6 +89,12 @@ struct JournalView: View {
     /// is the cap the user experiences, applied above it.
     private var visible: [JournalEntry] {
         purchase.entitlement.visibleEntries(store.entries)
+    }
+
+    /// This follows the tier-presented entries, so a weekly reflection never
+    /// gives the model access to journal days the current entitlement hides.
+    private var weeklyEntries: [JournalEntry] {
+        WeeklyJournal.entries(from: visible)
     }
 
     /// A free user at the cap: the list's quiet upsell. (Full never shows
@@ -145,6 +159,19 @@ struct JournalView: View {
                 }
                 .accessibilityLabel("Back to the reading table")
                 Spacer()
+                Button {
+                    weeklyInterpreter.reset()
+                    showingWeeklyReading = true
+                } label: {
+                    Label("Weekly", systemImage: "sparkles")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(weeklyEntries.isEmpty ? .white.opacity(0.25) : ReadingTable.uprightInk)
+                }
+                .disabled(weeklyEntries.isEmpty)
+                .accessibilityLabel("Weekly reading")
+                .accessibilityHint(weeklyEntries.isEmpty
+                    ? "Save a three-card reading this week to enable this."
+                    : "Reflect on this week's saved cards and journal notes.")
             }
             .padding(.horizontal, 14)
         }

@@ -181,7 +181,11 @@ final class PurchaseManager: ObservableObject {
 
     /// The gate. Free on launch; lifted by the one purchase, re-verified on
     /// every launch. Every free/paid difference in the app reads this.
-    @Published private(set) var entitlement: Entitlement = .free
+    /// TestFlight is a complimentary preview: its release builds carry a
+    /// sandbox receipt, so testers can use the whole app without creating a
+    /// test transaction. Debug builds deliberately stay free by default so
+    /// StoreKit sandbox purchase and restore flows remain testable.
+    @Published private(set) var entitlement: Entitlement
 
     /// The loaded product — the paywall prefers its `displayPrice` (the
     /// store's own, localized price) over `intendedPrice`.
@@ -196,8 +200,22 @@ final class PurchaseManager: ObservableObject {
 
     private let client: StoreKitClient
 
-    init(client: StoreKitClient = DefaultStoreKitClient()) {
+    init(client: StoreKitClient = DefaultStoreKitClient(),
+         grantsTestFlightAccess: Bool? = nil) {
         self.client = client
+        self.entitlement = (grantsTestFlightAccess ?? Self.isRunningInTestFlight) ? .full : .free
+    }
+
+    /// TestFlight release builds use the sandbox receipt. A development
+    /// build may use that same receipt environment for StoreKit testing, so
+    /// `DEBUG` is an intentional exclusion: local testing must still exercise
+    /// the real paywall and purchase path.
+    static var isRunningInTestFlight: Bool {
+        #if DEBUG
+        false
+        #else
+        Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        #endif
     }
 
     /// The price the paywall states: the store's own once it has loaded,

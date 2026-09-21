@@ -187,6 +187,26 @@ final class EntitlementTests: XCTestCase {
 @MainActor
 final class PurchaseManagerTests: XCTestCase {
 
+    func testTestFlightComplimentaryAccessStartsFull() async {
+        let client = FakeStoreKitClient()
+        let manager = await MainActor.run {
+            PurchaseManager(client: client, grantsTestFlightAccess: true)
+        }
+
+        let entitlement = await MainActor.run { manager.entitlement }
+        XCTAssertEqual(entitlement, .full)
+    }
+
+    func testNormalBuildStartsFree() async {
+        let client = FakeStoreKitClient()
+        let manager = await MainActor.run {
+            PurchaseManager(client: client, grantsTestFlightAccess: false)
+        }
+
+        let entitlement = await MainActor.run { manager.entitlement }
+        XCTAssertEqual(entitlement, .free)
+    }
+
     // ── one purchase lifts everything ───────────────────────────────────
 
     /// Roadmap M9, bar 2 (the lift): one purchase lifts all three gates at

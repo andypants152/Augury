@@ -269,8 +269,8 @@ simulator has no product — the paywall states the documented intent, and a
 debug launch arg (`-auguryTier full|free`) stands in for the purchase so both
 tiers are exercisable.
 
-**Bonus (1.0, unnumbered) — Siri + the on-device reflection.** The owner's
-1.0 extra, landed between M9 and M10: two **App Intents**
+**Bonus (1.0, unnumbered) — Siri + private reflections.** The owner's 1.0
+extra, landed between M9 and M10: two **App Intents**
 (`Intents/AuguryIntents.swift` — "start a tarot reading", "open the tarot
 journal") that open the app and route through `Engine/SiriNavigation` (a
 pending default for the cold launch, a notification for the running app);
@@ -280,19 +280,23 @@ iOS 26+), a fresh stateless session on a *completed* spread, in a sheet that
 pauses the holo like any modal. The model only *comments* on the deal — it
 never chooses cards, falls, or meanings (the M5 rule holds: the deal is the
 only randomness). The "Reading" button appears on a complete spread; a Siri
-re-deal and "New reading" reset it. Building the reflection needs Xcode 26+;
-the app's floor stays iOS 17 (pre-26 devices get an honest unavailable
-state). 3 tests; the tree is green.
+re-deal and "New reading" reset it. The Journal also offers a **Weekly**
+reading: it supplies the last seven calendar days' tier-visible three-card
+entries and their notes to a fresh, private on-device session. The reflection
+is never persisted or used to mutate the append-only journal, and it does not
+bypass the free journal cap. Building the reflections needs Xcode 26+; the
+app's floor stays iOS 17 (pre-26 devices get an honest unavailable state). 5
+tests; the tree is green.
 
-**Next: M10 — StoreKit 2, end to end**: the one unlock against a *real* store.
-The manager and the entitlement are in (M9); M10 adds the `.storekit`
-configuration (the `augury.unlock` non-consumable, $0.99, development +
-production) and takes the 4/4 bar for real: product fetches; purchase ⇒ full
-78 + all spreads + unlimited journal; kill + relaunch persists via
-`currentEntitlements`; fresh install + Restore re-grants — then a real-device
-sandbox purchase (the only live-untested surface, per the sharp edges). The
-`-auguryTier` debug hook retires with it (or stays as an M11 test aid — the
-owner's call).
+**M10 is implemented locally — StoreKit 2, end to end.** `Augury.storekit`
+defines the one `augury.unlock` non-consumable at $0.99, and the shared Run
+scheme attaches it to simulator launches. The purchase manager's unit suite
+pins free/full initialization, including the complimentary TestFlight path;
+the local simulator runbook covers fetch, purchase, relaunch persistence, and
+the fresh-install/Restore check. The final real-device sandbox transaction is
+an owner-only verification step: it needs the App Store Connect product and a
+sandbox tester, neither of which belongs in the repository. The `-auguryTier`
+debug hook stays available as an M11 screenshot aid.
 
 ---
 
@@ -307,6 +311,7 @@ owner's call).
 | `Spread` | `Models/Spread.swift` | spread definitions: 1-card, 3-card, Celtic cross — positions + prompts |
 | `Reading` | `Engine/Reading.swift` | shuffles the unlocked deck, deals to positions, assigns upright/inverted per card. The one real "random" (a shuffle) |
 | `ReadingStore` | `Store/ReadingStore.swift` | the daily journal: 3-card draws logged per day (cards + positions + date + note); append-only, local JSON |
+| `WeeklyJournal` + `WeeklyReadingInterpreter` | `Engine/WeeklyReadingInterpreter.swift` | filters the current seven calendar days and privately reflects on their tier-visible entries + notes; never persists generated text |
 | `PurchaseManager` | `Store/PurchaseManager.swift` | StoreKit 2: fetch/purchase/restore; entitlement local, re-verified on launch |
 | UI | `UI/*.swift` | the table, draw + flip + reveal (holo on reveal), spreads, journal, paywall card |
 
