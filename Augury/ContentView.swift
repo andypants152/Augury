@@ -23,6 +23,11 @@ struct ContentView: View {
     /// Created once here, shared with both rooms through the environment.
     @StateObject private var purchase = PurchaseManager()
     @State private var route: Route = .table
+    /// The introduction is a first-launch affordance, not a gate: finishing
+    /// or skipping it records one local preference and never asks for an
+    /// account, a permission, or a purchase.
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var showingOnboarding = false
     #if DEBUG
     @State private var seededJournal = false
     #endif
@@ -54,6 +59,15 @@ struct ContentView: View {
         .onAppear { handleSiriDestination(SiriNavigation.consumePendingDestination()) }
         .onReceive(NotificationCenter.default.publisher(for: SiriNavigation.didRequestDestination)) { note in
             handleSiriDestination(note.object as? SiriDestination)
+        }
+        .onAppear {
+            if !hasCompletedOnboarding { showingOnboarding = true }
+        }
+        .fullScreenCover(isPresented: $showingOnboarding) {
+            OnboardingView {
+                hasCompletedOnboarding = true
+                showingOnboarding = false
+            }
         }
         #if DEBUG
         .onAppear(perform: applyDebugHook)

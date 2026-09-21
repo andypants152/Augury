@@ -373,12 +373,21 @@ reading product.
 | **M9** | Free/paid gating — free = 22 majors + 2 spreads + 3 daily-journal entries; paid = 78 + all + unlimited | Free build deals only majors and enforces the daily-journal cap (tests); one purchase lifts everything; paywall states the one-time price plainly |
 | **M10** | The one unlock, end to end — `.storekit` (`augury.unlock`, $0.99) + 4/4 simulator + real-device sandbox (fetch/purchase/restore + entitlement are in from M9) | Simulator **4/4**: product fetches; purchase ⇒ full 78 + all spreads + unlimited journal; kill + relaunch persists via `currentEntitlements`; fresh install + Restore re-grants |
 
-### Phase 4 — Ship
+### Phase 4 — Versioned path to 1.0
 
-| # | Milestone (scope) | Done when (measurable) |
-|---|---|---|
-| **M11** | Polish — ritual UI pass, holo tuning (intensity/iridescence), flip haptics, icon, launch screen, README (build, min-Xcode pin, how the SVGs were made, how the holo works), tests green, archive | Clean `xcodebuild test` from a fresh checkout; valid, signable .ipa; real-device sandbox purchase succeeds; holo holds 60 fps on the oldest supported device |
-| **M12** | App Store submission (owner-only: ASC record + `augury.unlock` IAP + assets + copy; Small Business Program — already applied ✓) | **1.0 is live** |
+The app stays on a visible beta path rather than jumping straight from 0.1 to
+1.0. Each release adds one coherent, testable layer to the finished reading
+ritual; 1.0 is the polished, submission-ready culmination.
+
+| # | Version | Milestone (scope) | Done when (measurable) |
+|---|---|---|---|
+| **M11** | **0.2.0** | First-reading onboarding — a short, skippable introduction to reflective tarot, upright/inverted cards, the daily journal, and the free/full boundary | A fresh reader can reach and understand their first reveal without ambiguity; onboarding never blocks returning readers; VoiceOver and Dynamic Type verified |
+| **M12** | **0.3.0** | Card library — browse the deck’s art, keywords, and upright/inverted meanings outside a reading; free sees the 22 majors, full sees all 78 | Every entitled card opens from the library with correct art and meanings; locked minors lead clearly to the existing unlock, never a dead end |
+| **M13** | **0.4.0** | Settings + ritual controls — full users choose Major Arcana-only or the full 78-card deck for **new** readings; everyone can schedule an opt-in local daily or weekly ritual reminder at a chosen time | The deck preference flows into `ReadingEngine` (never UI filtering), saved readings stay unchanged, notification permission is requested only after opting in, and local notifications contain no drawn card or personal data |
+| **M14** | **0.5.0** | Keep and share on-device reflections — explicit Save to journal, Copy, and Share actions for a completed generated reflection | Nothing is saved automatically; saved reflection text is local, tied to its journal day, excludes the private note from sharing by default, and is included in the journal’s erase/export controls |
+| **M15** | **0.6.0** | Journal custody — export the local journal in a readable format and provide an erase-all-journal-data control with an unambiguous confirmation | Export contains the reader’s saved cards, notes, and saved reflections; erase removes all local journal data and leaves no ambiguous partial state |
+| **M16** | **0.7.0–0.9.0** | Release-candidate polish — ritual UI pass, holo tuning (intensity/iridescence), flip haptics, icon, launch screen, accessibility and small-device audit, external-beta fixes, tests green, archive | Clean `xcodebuild test` from a fresh checkout; valid, signable archive; real-device sandbox purchase/restore succeeds; holo holds 60 fps on the oldest supported device |
+| **M17** | **1.0.0** | App Store submission — final App Store Connect record, `augury.unlock` IAP, privacy/support links, screenshots, copy, review notes, and release submission | **1.0 is live** |
 
 ---
 
