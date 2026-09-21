@@ -124,6 +124,16 @@ final class EntitlementTests: XCTestCase {
                       "the Celtic cross is the paid spread")
     }
 
+    /// M13: deck preference narrows a full reader's *future* deals without
+    /// changing the entitlement itself. Free remains majors-only regardless
+    /// of a stale or manually written full-deck preference.
+    func testDeckPreferenceRespectsTheEntitlement() {
+        XCTAssertEqual(ReadingDeckPreference.fullDeck.deck(for: .full), Arcana.all)
+        XCTAssertEqual(ReadingDeckPreference.majorArcana.deck(for: .full), Entitlement.free.deck)
+        XCTAssertEqual(ReadingDeckPreference.fullDeck.deck(for: .free), Entitlement.free.deck)
+        XCTAssertEqual(ReadingDeckPreference.majorArcana.deck(for: .free), Entitlement.free.deck)
+    }
+
     // ── Gate 3 — the journal's cap (applied above the uncapped store) ───
 
     /// Roadmap M9, bar 3: free keeps 3 journal entries; full is unlimited.

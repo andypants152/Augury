@@ -48,9 +48,17 @@ struct ReadingTable: View {
     /// participates in shuffling, dealing, or the canonical card meanings.
     @StateObject private var interpreter = ReadingInterpreter()
 
+    /// M13: a full reader may intentionally narrow future deals to the Major
+    /// Arcana. The entitlement remains the authority on what is allowed;
+    /// this preference only selects within that allowed deck.
+    @AppStorage("preferredDeck") private var preferredDeckRaw = ReadingDeckPreference.fullDeck.rawValue
+
     /// Gate 1 (M9): the deck the engine shuffles from — the 22 majors free,
     /// the 78 full. (Was `Arcana.all`; the entitlement owns it now.)
-    private var deck: [Arcana] { purchase.entitlement.deck }
+    private var deck: [Arcana] {
+        let preference = ReadingDeckPreference(rawValue: preferredDeckRaw) ?? .fullDeck
+        return preference.deck(for: purchase.entitlement)
+    }
 
     /// The chosen spread — M7's generalization of M6's hard-coded three.
     /// Defaults to the M6 spread, so a cold launch is the same ritual it was.
@@ -71,12 +79,13 @@ struct ReadingTable: View {
     @State private var showingPaywall = false
     @State private var showingReflection = false
     @State private var showingLibrary = false
+    @State private var showingSettings = false
 
     /// The scene's live state (M8 adds the room gate, M9 adds the paywall
     /// gate): the scene is active, the table is the room on screen, and the
     /// paywall is not covering it. A card behind a modal is not a face-up
     /// card — the holo pauses and the sensor stops.
-    private var sceneLive: Bool { !isHidden && !showingPaywall && !showingReflection && !showingLibrary && scenePhase == .active }
+    private var sceneLive: Bool { !isHidden && !showingPaywall && !showingReflection && !showingLibrary && !showingSettings && scenePhase == .active }
 
     /// A card that is up *and* whose scene is live: the holo/motion state.
     private var live: Bool { sceneLive && !revealed.isEmpty }
@@ -146,6 +155,9 @@ struct ReadingTable: View {
         .fullScreenCover(isPresented: $showingLibrary) {
             CardLibraryView()
         }
+        .fullScreenCover(isPresented: $showingSettings) {
+            SettingsView()
+        }
         .accessibilityElement(children: .contain)
     }
 
@@ -165,6 +177,14 @@ struct ReadingTable: View {
                     .background(Color.white.opacity(0.06), in: Circle())
             }
             .accessibilityLabel("Open the card library")
+            Button(action: { showingSettings = true }) {
+                Image(systemName: "gearshape")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.06), in: Circle())
+            }
+            .accessibilityLabel("Open settings")
             if !purchase.entitlement.isFull {
                 Button(action: { showingPaywall = true }) {
                     Label("Unlock", systemImage: "lock")
