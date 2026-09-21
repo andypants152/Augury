@@ -110,6 +110,12 @@ protocol StoreKitClient: AnyObject {
     /// (`Transaction.currentEntitlements`, collected to ids so the seam —
     /// and the tests — never need to construct framework types).
     func grantedProductIDs() async -> Set<String>
+    /// Refresh the local StoreKit transaction cache after an explicit user
+    /// request to restore purchases.
+    func sync() async
+    /// Verified product IDs that arrive after launch (for example, after an
+    /// Ask to Buy approval). The manager owns the task that consumes this.
+    func transactionUpdates() -> AsyncStream<String>
 }
 
 /// The real store: StoreKit 2.
@@ -148,6 +154,24 @@ final class DefaultStoreKitClient: StoreKitClient {
         }
         return ids
     }
+
+    func sync() async {
+        try? await AppStore.sync()
+    }
+
+    func transactionUpdates() -> AsyncStream<String> {
+        AsyncStream { continuation in
+            let task = Task {
+                for await result in Transaction.updates {
+                    guard case .verified(let transaction) = result else { continue }
+                    continuation.yield(transaction.productID)
+                    await transaction.finish()
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
 }
 
 // MARK: - PurchaseManager
@@ -179,12 +203,9 @@ final class PurchaseManager: ObservableObject {
     /// deck of this shape is a coffee, not a hundred lattes.)
     static let intendedPrice = "$0.99"
 
-    /// The gate. Free on launch; lifted by the one purchase, re-verified on
-    /// every launch. Every free/paid difference in the app reads this.
-    /// TestFlight is a complimentary preview: its release builds carry a
-    /// sandbox receipt, so testers can use the whole app without creating a
-    /// test transaction. Debug builds deliberately stay free by default so
-    /// StoreKit sandbox purchase and restore flows remain testable.
+    /// The gate. Free on launch; lifted only by a verified StoreKit
+    /// transaction, then re-verified on every launch. Every free/paid
+    /// difference in the app reads this.
     @Published private(set) var entitlement: Entitlement
 
     /// The loaded product — the paywall prefers its `displayPrice` (the
@@ -199,23 +220,21 @@ final class PurchaseManager: ObservableObject {
     @Published private(set) var purchaseFailed = false
 
     private let client: StoreKitClient
+    private var transactionUpdatesTask: Task<Void, Never>?
 
-    init(client: StoreKitClient = DefaultStoreKitClient(),
-         grantsTestFlightAccess: Bool? = nil) {
+    init(client: StoreKitClient = DefaultStoreKitClient()) {
         self.client = client
-        self.entitlement = (grantsTestFlightAccess ?? Self.isRunningInTestFlight) ? .full : .free
+        self.entitlement = .free
+        transactionUpdatesTask = Task { [weak self] in
+            guard let self else { return }
+            for await productID in client.transactionUpdates() where productID == Self.productID {
+                self.entitlement = .full
+            }
+        }
     }
 
-    /// TestFlight release builds use the sandbox receipt. A development
-    /// build may use that same receipt environment for StoreKit testing, so
-    /// `DEBUG` is an intentional exclusion: local testing must still exercise
-    /// the real paywall and purchase path.
-    static var isRunningInTestFlight: Bool {
-        #if DEBUG
-        false
-        #else
-        Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
-        #endif
+    deinit {
+        transactionUpdatesTask?.cancel()
     }
 
     /// The price the paywall states: the store's own once it has loaded,
@@ -266,10 +285,11 @@ final class PurchaseManager: ObservableObject {
         }
     }
 
-    /// "Restore purchase": re-run the verify. (The classic App Store restore
-    /// sheet + the 4/4 simulator pass is M10; this is M9's form — for a
-    /// non-consumable, `currentEntitlements` is what a relaunch re-grants.)
+    /// "Restore purchase": explicitly refresh StoreKit, then re-check the
+    /// verified entitlement. `AppStore.sync()` may prompt for App Store
+    /// credentials, so this remains callable only from the user's button.
     func restore() async {
+        await client.sync()
         await verify()
     }
 

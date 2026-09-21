@@ -73,7 +73,7 @@ struct Paywall: View {
                 .disabled(purchase.isPurchasing)
                 .accessibilityLabel("Restore a purchase made on another device or a previous install")
 
-                Text("No subscription. No account. No internet.")
+                Text("No subscription. No account. Your journal stays on your device.")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.35))
             }

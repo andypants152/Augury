@@ -14,6 +14,8 @@ private final class FakeStoreKitClient: StoreKitClient {
     var granted: Set<String> = []
     var productRequests: [String] = []
     var purchaseCalls = 0
+    var syncCalls = 0
+    private var updatesContinuation: AsyncStream<String>.Continuation?
 
     func products(for ids: [String]) async -> [Product] {
         productRequests.append(contentsOf: ids)
@@ -27,6 +29,20 @@ private final class FakeStoreKitClient: StoreKitClient {
 
     func grantedProductIDs() async -> Set<String> {
         granted
+    }
+
+    func sync() async {
+        syncCalls += 1
+    }
+
+    func transactionUpdates() -> AsyncStream<String> {
+        AsyncStream { continuation in
+            updatesContinuation = continuation
+        }
+    }
+
+    func sendUpdate(productID: String) {
+        updatesContinuation?.yield(productID)
     }
 }
 
@@ -187,24 +203,10 @@ final class EntitlementTests: XCTestCase {
 @MainActor
 final class PurchaseManagerTests: XCTestCase {
 
-    func testTestFlightComplimentaryAccessStartsFull() async {
+    func testFreshInstallStartsFreeUntilStoreKitVerifiesTheUnlock() async {
         let client = FakeStoreKitClient()
-        let manager = await MainActor.run {
-            PurchaseManager(client: client, grantsTestFlightAccess: true)
-        }
-
-        let entitlement = await MainActor.run { manager.entitlement }
-        XCTAssertEqual(entitlement, .full)
-    }
-
-    func testNormalBuildStartsFree() async {
-        let client = FakeStoreKitClient()
-        let manager = await MainActor.run {
-            PurchaseManager(client: client, grantsTestFlightAccess: false)
-        }
-
-        let entitlement = await MainActor.run { manager.entitlement }
-        XCTAssertEqual(entitlement, .free)
+        let manager = PurchaseManager(client: client)
+        XCTAssertEqual(manager.entitlement, .free)
     }
 
     // ── one purchase lifts everything ───────────────────────────────────
@@ -269,8 +271,25 @@ final class PurchaseManagerTests: XCTestCase {
         XCTAssertEqual(manager.entitlement, .free)
         XCTAssertFalse(manager.purchaseFailed)
 
-        client.granted = [PurchaseManager.productID]   // it lands
-        await manager.verify()
+        // Let the manager subscribe before delivering the approval, then
+        // give its main-actor update task a few turns to consume it.
+        await Task.yield()
+        client.sendUpdate(productID: PurchaseManager.productID) // it lands while open
+        for _ in 0..<10 {
+            if manager.entitlement == .full { return }
+            await Task.yield()
+        }
+        XCTFail("a verified transaction update should unlock without relaunching")
+    }
+
+    func testRestoreSyncsThenVerifiesTheUnlock() async {
+        let client = FakeStoreKitClient()
+        client.granted = [PurchaseManager.productID]
+        let manager = PurchaseManager(client: client)
+
+        await manager.restore()
+
+        XCTAssertEqual(client.syncCalls, 1)
         XCTAssertEqual(manager.entitlement, .full)
     }
 

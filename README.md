@@ -3,7 +3,7 @@
 A tarot / oracle reading app you own. A complete, hand-made deck of **78 celestial
 line-art cards** with a **holographic foil finish that shifts as you tilt the device**.
 
-**One price ($0.99), yours forever. No subscription. No account. No internet.**
+**One price ($0.99), yours forever. No subscription. No account. Your journal stays on your device.**
 
 > **Status: M9 + the 1.0 bonus** — the 78-card deck **in the app bundle**
 > (M1–M3), the holographic finish (M4), the deal engine (M5), the
